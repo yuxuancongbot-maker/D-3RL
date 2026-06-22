@@ -1,0 +1,72 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "d3rl-diffusion-policy"
+version = "0.1.0"
+description = "A cleaner D3RL/Diffusion Policy research codebase with compatible training and inference workflows."
+readme = "README.md"
+requires-python = ">=3.9,<3.11"
+license = {text = "MIT"}
+authors = [
+  {name = "D3RL Diffusion Policy Contributors"}
+]
+dependencies = [
+  "click",
+  "hydra-core>=1.2",
+  "omegaconf",
+  "numpy",
+  "torch",
+  "dill",
+  "tqdm",
+  "wandb",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest",
+  "ruff",
+]
+sim = [
+  "gym",
+  "zarr",
+  "opencv-python",
+]
+real = [
+  "pyrealsense2",
+]
+
+[project.scripts]
+dp-train = "diffusion_policy.cli.train:main"
+dp-eval = "diffusion_policy.cli.eval:main"
+dp-multirun = "diffusion_policy.cli.multirun:main"
+dp-metrics = "diffusion_policy.cli.metrics:main"
+dp-collect-oracle = "diffusion_policy.cli.collect_oracle_labels:main"
+dp-pretrain-scheduler = "diffusion_policy.cli.pretrain_scheduler:main"
+dp-eval-d3rl = "diffusion_policy.cli.eval_d3rl:main"
+dp-eval-ada-bridger = "diffusion_policy.cli.eval_ada_bridger:main"
+dp-eval-combined = "diffusion_policy.cli.eval_combined_inference:main"
+dp-demo-combined = "diffusion_policy.cli.demo_combined_inference:main"
+dp-demo-ada-bridger = "diffusion_policy.cli.demo_ada_bridger_video:main"
+dp-benchmark-ddim = "diffusion_policy.cli.benchmark_ddim_steps:main"
+dp-eval-ablation = "diffusion_policy.cli.eval_ablation_table:main"
+dp-run-ablation-pusht = "diffusion_policy.cli.run_ablation_pusht:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+  "smoke: fast import and CLI smoke tests",
+  "compatibility: old checkpoint/config compatibility tests",
+  "integration: end-to-end workflow tests",
+  "gpu: tests requiring CUDA",
+  "mujoco: tests requiring MuJoCo or Robomimic",
+  "real: tests requiring real robot hardware",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"

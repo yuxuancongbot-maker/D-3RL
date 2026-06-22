@@ -1,0 +1,30 @@
+name: d3rl_stage4_ppo
+_target_: diffusion_policy.workspace.d3rl_workspace.D3RLWorkspace
+workspace:
+  _target_: diffusion_policy.workspace.d3rl_workspace.D3RLWorkspace
+
+horizon: 16
+n_obs_steps: 2
+n_action_steps: 8
+
+scheduler:
+  refinement_steps: [0, 2, 5, 10]
+  max_refinement_steps: 10
+  hidden_dim: 256
+  num_layers: 2
+
+stage4:
+  mode: lightweight_ppo
+  reward:
+    cost_type: refinement_steps
+    cost_coef_target: 0.05
+    task_only_epochs: 10
+    cost_warmup_epochs: 20
+  regularization:
+    kl_to_pretrained: true
+    kl_coef: 0.05
+  guard:
+    enable: true
+    eval_every: 5
+    success_tolerance: 0.05
+    rollback_on_drop: true

@@ -1,0 +1,55 @@
+defaults:
+  - experiment: diffusion_unet_lowdim
+  - task: pusht_lowdim
+  - training: debug
+  - logging: disabled
+  - checkpoint: default
+  - _self_
+
+name: ${experiment.name}_${task.name}
+_target_: ${experiment._target_}
+
+# Root-level compatibility fields expected by legacy workspaces.
+obs_dim: ${oc.select:experiment.obs_dim,${task.obs_dim}}
+action_dim: ${oc.select:experiment.action_dim,${task.action_dim}}
+keypoint_dim: ${oc.select:experiment.keypoint_dim,${oc.select:task.keypoint_dim,null}}
+task_name: ${oc.select:experiment.task_name,${task.name}}
+exp_name: ${oc.select:experiment.exp_name,default}
+horizon: ${experiment.horizon}
+n_obs_steps: ${experiment.n_obs_steps}
+n_action_steps: ${experiment.n_action_steps}
+n_latency_steps: ${oc.select:experiment.n_latency_steps,0}
+past_action_visible: ${oc.select:experiment.past_action_visible,false}
+keypoint_visible_rate: ${oc.select:experiment.keypoint_visible_rate,1.0}
+prev_action_horizon: ${oc.select:experiment.prev_action_horizon,null}
+obs_as_local_cond: ${oc.select:experiment.obs_as_local_cond,false}
+obs_as_global_cond: ${oc.select:experiment.obs_as_global_cond,false}
+pred_action_steps_only: ${oc.select:experiment.pred_action_steps_only,false}
+
+policy: ${oc.select:experiment.policy,null}
+ema: ${oc.select:experiment.ema,null}
+dataloader: ${oc.select:experiment.dataloader,null}
+val_dataloader: ${oc.select:experiment.val_dataloader,null}
+optimizer: ${oc.select:experiment.optimizer,null}
+vae_model: ${oc.select:experiment.vae_model,null}
+use_vae: ${oc.select:experiment.use_vae,false}
+scheduler: ${oc.select:experiment.scheduler,null}
+pegrad: ${oc.select:experiment.pegrad,null}
+ppo: ${oc.select:experiment.ppo,null}
+source_policy_checkpoint: ${oc.select:experiment.source_policy_checkpoint,null}
+source_policy_config: ${oc.select:experiment.source_policy_config,null}
+refinement_policy_checkpoint: ${oc.select:experiment.refinement_policy_checkpoint,null}
+refinement_policy_config: ${oc.select:experiment.refinement_policy_config,null}
+
+multi_run:
+  run_dir: outputs/${now:%Y.%m.%d}/${now:%H.%M.%S}_${name}_${task.name}
+  wandb_name_base: ${now:%Y.%m.%d-%H.%M.%S}_${name}_${task.name}
+
+hydra:
+  job:
+    override_dirname: ${name}
+  run:
+    dir: outputs/${now:%Y.%m.%d}/${now:%H.%M.%S}_${name}_${task.name}
+  sweep:
+    dir: outputs/${now:%Y.%m.%d}/${now:%H.%M.%S}_${name}_${task.name}
+    subdir: ${hydra.job.num}

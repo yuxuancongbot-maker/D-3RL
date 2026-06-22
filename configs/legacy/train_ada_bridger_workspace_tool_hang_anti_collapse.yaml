@@ -1,0 +1,105 @@
+# Ada-BRIDGER Tool-Hang anti-collapse config
+# 目标：避免 scheduler 早期塌缩到 k=0，同时保证任务分数先起来
+
+defaults:
+  - _self_
+  - task: tool_hang_lowdim_abs
+  # 若你使用绝对动作版本，改成: task: tool_hang_lowdim_abs
+
+name: train_ada_bridger_tool_hang_anti_collapse
+_target_: diffusion_policy.workspace.train_ada_bridger_workspace.TrainAdaBridgerWorkspace
+
+obs_dim: ${task.obs_dim}
+action_dim: ${task.action_dim}
+task_name: ${task.name}
+exp_name: "ada_bridger"
+
+# robomimic lowdim 常用序列参数
+horizon: 16
+n_obs_steps: 2
+n_action_steps: 8
+n_latency_steps: 0
+past_action_visible: False
+keypoint_visible_rate: 1.0
+
+# 预训练 backbone（来自 COMMANDS_GUIDE）
+source_policy_checkpoint: "weights/lowdim/predictor/vae/vae_tool_hang_lowdim/checkpoints/latest.ckpt"
+source_policy_config: null
+refinement_policy_checkpoint: "weights/lowdim/diffusion/robomimic/cnn/tool_hang/epoch=0850-test_mean_score=0.818.ckpt"
+refinement_policy_config: null
+
+scheduler:
+  hidden_dim: 256
+  num_layers: 2
+  # 与常见预训练 scheduler checkpoint 维度保持一致（4-way）
+  step_options: [0, 1, 2, 5]
+  ddim_steps: [0, 1, 2, 10]
+  max_refinement_steps: 5
+  # 推荐存在则加载；不存在会自动从零开始
+  pretrain_checkpoint: "data/outputs/ada_scheduler_tool_hang/scheduler_best.pt"
+
+pegrad:
+  task_weight: 1.0
+  cost_weight: 0.1
+  project_cost_to_task: True
+  clip_grad_norm: 0.5
+
+ppo:
+  clip_epsilon: 0.2
+  value_loss_coef: 0.5
+  # 提高探索，防止早期策略塌缩到单一 k
+  entropy_coef: 0.15
+  max_grad_norm: 0.5
+  # 第一阶段先弱化效率惩罚，让策略先学会做对任务
+  efficiency_coef: 0.001
+  gamma: 0.99
+  gae_lambda: 0.95
+  n_epochs: 4
+  batch_size: 64
+
+optimizer:
+  lr: 3.0e-4
+  betas: [0.9, 0.999]
+  eps: 1.0e-8
+
+training:
+  device: "cuda:0"
+  seed: 42
+  debug: False
+  resume: False
+  num_epochs: 50
+  # 提高 rollout 数量，降低 PPO 高方差导致的塌缩
+  n_rollouts_per_epoch: 6
+  eval_every: 5
+  checkpoint_every: 10
+  tqdm_interval_sec: 1.0
+
+logging:
+  project: ada_bridger_tool_hang
+  resume: True
+  mode: online
+  name: ${now:%Y.%m.%d-%H.%M.%S}_${name}_${task_name}
+  tags: ["${name}", "${task_name}", "${exp_name}"]
+  id: null
+  group: null
+
+checkpoint:
+  topk:
+    monitor_key: test/mean_score
+    mode: max
+    k: 5
+    format_str: 'epoch={epoch:04d}-test_mean_score={test/mean_score:.3f}.ckpt'
+  save_last_ckpt: True
+  save_last_snapshot: False
+
+multi_run:
+  run_dir: data/outputs/${now:%Y.%m.%d}/${now:%H.%M.%S}_${name}_${task_name}
+
+hydra:
+  job:
+    chdir: False
+  run:
+    dir: data/outputs/${now:%Y.%m.%d}/${now:%H.%M.%S}_${name}_${task_name}
+  sweep:
+    dir: data/outputs/${now:%Y.%m.%d}/${now:%H.%M.%S}_${name}_${task_name}
+    subdir: ${hydra.job.num}

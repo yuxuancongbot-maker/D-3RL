@@ -1,0 +1,7 @@
+project: d3rl_diffusion_policy
+resume: false
+mode: disabled
+name: ${name}
+tags: []
+id: null
+group: null

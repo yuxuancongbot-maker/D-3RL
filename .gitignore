@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Environments
+.venv/
+.env
+.env.*
+
+# Experiment outputs
+data/*
+!data/.gitkeep
+outputs/*
+!outputs/.gitkeep
+weights/
+wandb/
+logs/
+.hydra/
+*.log
+MUJOCO_LOG.TXT
+
+
+# Checkpoints and generated media
+*.ckpt
+*.pt
+*.pth
+*.mp4
+*.avi
+*.zarr/
+
+# OS/editor
+.DS_Store
+.vscode/
+.idea/

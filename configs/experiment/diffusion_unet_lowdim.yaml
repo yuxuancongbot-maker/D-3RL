@@ -1,0 +1,80 @@
+name: train_diffusion_unet_lowdim
+_target_: diffusion_policy.workspace.train_diffusion_unet_lowdim_workspace.TrainDiffusionUnetLowdimWorkspace
+workspace:
+  _target_: diffusion_policy.workspace.train_diffusion_unet_lowdim_workspace.TrainDiffusionUnetLowdimWorkspace
+
+obs_dim: ${task.obs_dim}
+action_dim: ${task.action_dim}
+keypoint_dim: ${task.keypoint_dim}
+task_name: ${task.name}
+exp_name: default
+
+horizon: 16
+n_obs_steps: 2
+n_action_steps: 8
+n_latency_steps: 0
+past_action_visible: false
+keypoint_visible_rate: 1.0
+obs_as_local_cond: false
+obs_as_global_cond: true
+pred_action_steps_only: false
+
+policy:
+  _target_: diffusion_policy.policy.diffusion_unet_lowdim_policy.DiffusionUnetLowdimPolicy
+  model:
+    _target_: diffusion_policy.model.diffusion.conditional_unet1d.ConditionalUnet1D
+    input_dim: "${eval: ${task.action_dim} if ${experiment.obs_as_local_cond} or ${experiment.obs_as_global_cond} else ${task.obs_dim} + ${task.action_dim}}"
+    local_cond_dim: "${eval: ${task.obs_dim} if ${experiment.obs_as_local_cond} else None}"
+    global_cond_dim: "${eval: ${task.obs_dim}*${experiment.n_obs_steps} if ${experiment.obs_as_global_cond} else None}"
+    diffusion_step_embed_dim: 256
+    down_dims: [256, 512, 1024]
+    kernel_size: 5
+    n_groups: 8
+    cond_predict_scale: true
+  noise_scheduler:
+    _target_: diffusers.schedulers.scheduling_ddim.DDIMScheduler
+    num_train_timesteps: 100
+    beta_start: 0.0001
+    beta_end: 0.02
+    beta_schedule: squaredcos_cap_v2
+    clip_sample: true
+    prediction_type: epsilon
+  horizon: ${experiment.horizon}
+  obs_dim: ${experiment.obs_dim}
+  action_dim: ${experiment.action_dim}
+  n_action_steps: ${eval:'${experiment.n_action_steps}+${experiment.n_latency_steps}'}
+  n_obs_steps: ${experiment.n_obs_steps}
+  num_inference_steps: 100
+  obs_as_local_cond: ${experiment.obs_as_local_cond}
+  obs_as_global_cond: ${experiment.obs_as_global_cond}
+  pred_action_steps_only: ${experiment.pred_action_steps_only}
+  oa_step_convention: true
+
+ema:
+  _target_: diffusion_policy.model.diffusion.ema_model.EMAModel
+  update_after_step: 0
+  inv_gamma: 1.0
+  power: 0.75
+  min_value: 0.0
+  max_value: 0.9999
+
+dataloader:
+  batch_size: 256
+  num_workers: 1
+  shuffle: true
+  pin_memory: true
+  persistent_workers: false
+
+val_dataloader:
+  batch_size: 256
+  num_workers: 1
+  shuffle: false
+  pin_memory: true
+  persistent_workers: false
+
+optimizer:
+  _target_: torch.optim.AdamW
+  lr: 1.0e-4
+  betas: [0.95, 0.999]
+  eps: 1.0e-8
+  weight_decay: 1.0e-6

@@ -1,0 +1,16 @@
+device: cuda:0
+seed: 42
+debug: true
+resume: false
+num_epochs: 2
+max_train_steps: 2
+max_val_steps: 2
+rollout_every: 1
+checkpoint_every: 1
+val_every: 1
+sample_every: 1
+tqdm_interval_sec: 1.0
+use_ema: false
+lr_scheduler: cosine
+lr_warmup_steps: 0
+gradient_accumulate_every: 1

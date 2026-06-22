@@ -1,0 +1,120 @@
+# Ada-BRIDGER: 自适应精炼扩散策略训练配置
+# 第二阶段: RL 训练调度器
+
+defaults:
+  - _self_
+  - task: pusht_lowdim  # robomimic 使用 abs 配置
+
+name: train_ada_bridger
+_target_: diffusion_policy.workspace.train_ada_bridger_workspace.TrainAdaBridgerWorkspace
+
+# ========== 维度信息 ==========
+obs_dim: ${task.obs_dim}
+action_dim: ${task.action_dim}
+task_name: ${task.name}
+exp_name: "ada_bridger"
+
+# ========== 序列参数 ==========
+# 注意: robomimic 任务使用 horizon=16, n_action_steps=8
+# 从检查点中读取的policy会有自己的horizon，这里需要与之匹配
+horizon: 16
+n_obs_steps: 2
+n_action_steps: 8
+n_latency_steps: 0
+past_action_visible: False
+keypoint_visible_rate: 1.0
+
+# ========== 预训练模型路径 ==========
+# Source Policy: Action Predictor VAE (快速初猜)
+# 路径模式: data/outputs/bridger/vae_{task}_lowdim/checkpoints/latest.ckpt
+source_policy_checkpoint: "/inspire/hdd/project/inference-chip/lijinhao-240108540148/research_yuxuancong/diffusion_policy_bridger_adaptive/weights/lowdim/predictor/vae/vae_pusht_lowdim/checkpoints/latest.ckpt"
+source_policy_config: null  # 从 checkpoint 中读取
+
+# Refinement Policy: Diffusion Policy (精炼)
+# 路径模式: weights/lowdim/diffusion/robomimic/cnn/{task}/epoch=0350-test_mean_score=1.000.ckpt
+refinement_policy_checkpoint: "/inspire/hdd/project/inference-chip/lijinhao-240108540148/research_yuxuancong/diffusion_policy_bridger_adaptive/weights/lowdim/diffusion/pusht/cnn/latest.ckpt"
+refinement_policy_config: null  # 从 checkpoint 中读取
+
+# ========== Ada-Scheduler 配置 ==========
+scheduler:
+  hidden_dim: 256
+  num_layers: 2
+  # 精炼步数选项 (k值): 0=跳过精炼, 1=快速精炼, 2=中等精炼, 5=完整精炼
+  step_options: [0, 1, 2, 5]
+  # 对应的实际 DDIM 推理步数: k=0→0, k=1→2, k=2→5, k=5→10
+  ddim_steps: [0, 2, 5, 10]
+  max_refinement_steps: 5
+  # 预训练的 Scheduler checkpoint (可选，用于 Oracle 预训练后的 RL 微调)
+  # 设置为 null 则从零开始训练
+  pretrain_checkpoint: null
+
+# ========== PEGrad 配置 ==========
+pegrad:
+  task_weight: 1.0      # 任务奖励权重
+  cost_weight: 0.2      # 效率惩罚权重
+  project_cost_to_task: True  # 启用梯度投影
+  clip_grad_norm: 0.5
+
+# ========== PPO 配置 ==========
+ppo:
+  clip_epsilon: 0.2
+  value_loss_coef: 0.5
+  entropy_coef: 0.015  # 探索系数
+  max_grad_norm: 0.5
+  efficiency_coef: 0.12 # λ: 效率惩罚系数（仅成功时生效）
+  gamma: 0.99
+  gae_lambda: 0.95
+  n_epochs: 2
+  batch_size: 64
+
+# ========== 优化器配置 ==========
+optimizer:
+  lr: 3.0e-4
+  betas: [0.9, 0.999]
+  eps: 1.0e-8
+
+# ========== 训练配置 ==========
+training:
+  device: "cuda:0"
+  seed: 42
+  debug: False
+  resume: True
+  num_epochs: 100
+  n_rollouts_per_epoch: 8  # 减少以加速训练（原 10）
+  eval_every: 10
+  checkpoint_every: 10
+  tqdm_interval_sec: 1.0
+
+# ========== 日志配置 ==========
+logging:
+  project: ada_bridger_pusht
+  resume: True
+  mode: online
+  name: ${now:%Y.%m.%d-%H.%M.%S}_${name}_${task_name}
+  tags: ["${name}", "${task_name}", "${exp_name}"]
+  id: null
+  group: null
+
+# ========== Checkpoint 配置 ==========
+checkpoint:
+  topk:
+    monitor_key: test/mean_score
+    mode: max
+    k: 5
+    format_str: 'epoch={epoch:04d}-test_mean_score={test/mean_score:.3f}.ckpt'
+  save_last_ckpt: True
+  save_last_snapshot: False
+
+# ========== 多运行配置 ==========
+multi_run:
+  run_dir: data/outputs/${now:%Y.%m.%d}/${now:%H.%M.%S}_${name}_${task_name}
+
+# ========== Hydra 配置 ==========
+hydra:
+  job:
+    chdir: False
+  run:
+    dir: data/outputs/${now:%Y.%m.%d}/${now:%H.%M.%S}_${name}_${task_name}
+  sweep:
+    dir: data/outputs/${now:%Y.%m.%d}/${now:%H.%M.%S}_${name}_${task_name}
+    subdir: ${hydra.job.num}

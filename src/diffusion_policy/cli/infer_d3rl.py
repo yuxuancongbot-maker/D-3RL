@@ -240,17 +240,11 @@ def run_episode(policy, env, tcfg: dict, device: str = "cuda:0"):
         e_end = torch.cuda.Event(enable_timing=True)
 
     while not done:
-        # 准备 obs: 处理 PushT mask / robomimic dict
-        if is_robomimic:
-            # robomimic: obs 是 dict
-            obs_dict = {}
-            for k, v in obs.items():
-                obs_dict[k] = torch.from_numpy(v[np.newaxis].astype(np.float32)).to(device)
-        else:
-            raw_obs = obs[np.newaxis].astype(np.float32)
-            if raw_obs.shape[-1] == obs_dim * 2:  # PushT mask
-                raw_obs = raw_obs[..., :obs_dim]
-            obs_dict = {"obs": torch.from_numpy(raw_obs[:, :n_obs_steps]).to(device)}
+        # 准备 obs: PushT 需要去掉 visibility mask，robomimic 直接用
+        raw_obs = obs[np.newaxis].astype(np.float32)
+        if not is_robomimic and raw_obs.shape[-1] == obs_dim * 2:
+            raw_obs = raw_obs[..., :obs_dim]  # PushT: 去掉 mask
+        obs_dict = {"obs": torch.from_numpy(raw_obs[:, :n_obs_steps]).to(device)}
 
         if use_cuda:
             e_start.record()

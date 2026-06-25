@@ -41,11 +41,13 @@ class AdaBridgerPolicy(nn.Module):
         action_dim: int,
         n_action_steps: int,
         n_obs_steps: int,
-        step_options: List[int] = None,
-        ddim_steps: List[int] = None,
+        refinement_steps: List[int] = None,
         max_refinement_steps: int = 5,
         scheduler_deterministic: bool = True,
         freeze_backbone: bool = True,
+        # ---- 向后兼容 ----
+        step_options: List[int] = None,
+        ddim_steps: List[int] = None,
     ):
         super().__init__()
 
@@ -59,15 +61,20 @@ class AdaBridgerPolicy(nn.Module):
         self.n_action_steps = n_action_steps
         self.n_obs_steps = n_obs_steps
 
-        self.step_options = step_options or [0, 1, 2, 5]
-        self.ddim_steps = ddim_steps or [0, 2, 5, 10]
+        # 精炼步数直接对应 DDIM 推理步数 {0, 2, 5, 10}
+        # 向后兼容：如果传入旧式 step_options/ddim_steps，使用 ddim_steps 作为精炼步数
+        if refinement_steps is not None:
+            self.refinement_steps = list(refinement_steps)
+        elif ddim_steps is not None:
+            self.refinement_steps = list(ddim_steps)
+        elif step_options is not None:
+            # 旧式 step_options → 尝试推断 DDIM 步数
+            self.refinement_steps = list(step_options)
+        else:
+            self.refinement_steps = [0, 1, 2, 5]
+
         self.max_refinement_steps = max_refinement_steps
         self.scheduler_deterministic = scheduler_deterministic
-
-        # k → DDIM 实际推理步数的映射表
-        self._k_to_ddim = {}
-        for k, d in zip(self.step_options, self.ddim_steps):
-            self._k_to_ddim[k] = d
 
         # 冻结 backbone
         if freeze_backbone:
@@ -85,6 +92,16 @@ class AdaBridgerPolicy(nn.Module):
         # 推理统计
         self._inference_stats: List[Dict] = []
         self._skip_first_timing = True
+
+    @property
+    def step_options(self) -> List[int]:
+        """向后兼容：返回 refinement_steps 的副本。"""
+        return list(self.refinement_steps)
+
+    @property
+    def ddim_steps(self) -> List[int]:
+        """向后兼容：返回 refinement_steps 的副本。"""
+        return list(self.refinement_steps)
 
     # ------------------------------------------------------------------
     # Normalizer
@@ -351,9 +368,9 @@ class AdaBridgerPolicy(nn.Module):
         # 获取或创建缓存的 DDIM scheduler（仅首次创建）
         ddim_scheduler = self._get_ddim_scheduler(noise_scheduler)
 
-        # k → DDIM 步数
-        num_inference_steps = self._k_to_ddim.get(k, max(int(k * 2), 1))
-        if num_inference_steps == 0:
+        # 精炼步数直接就是 DDIM 推理步数（不再需要 k → DDIM 映射）
+        num_inference_steps = int(k)
+        if num_inference_steps <= 0:
             return init_action
 
         ddim_scheduler.set_timesteps(num_inference_steps)

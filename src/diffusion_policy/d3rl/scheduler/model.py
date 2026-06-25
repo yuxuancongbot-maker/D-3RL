@@ -84,7 +84,7 @@ class ActionAwareEncoder(nn.Module):
 class D3RLScheduler(nn.Module):
     """Scheduler over actual refinement step choices."""
 
-    DEFAULT_REFINEMENT_STEPS = [0, 2, 5, 10]
+    DEFAULT_REFINEMENT_STEPS = [0, 1, 2, 5]
 
     def __init__(
         self,

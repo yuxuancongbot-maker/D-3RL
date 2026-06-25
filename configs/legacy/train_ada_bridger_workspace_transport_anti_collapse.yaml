@@ -31,8 +31,8 @@ scheduler:
   hidden_dim: 256
   num_layers: 2
   # 与常见预训练 scheduler checkpoint 维度保持一致（4-way）
-  step_options: [0, 1, 2, 5]
-  ddim_steps: [0, 1, 2, 5]
+  refinement_steps: [0, 1, 2, 5]
+  
   max_refinement_steps: 5
   # 推荐存在则加载；不存在会自动从零开始
   pretrain_checkpoint: "data/outputs/ada_scheduler_transport/scheduler_best.pt"

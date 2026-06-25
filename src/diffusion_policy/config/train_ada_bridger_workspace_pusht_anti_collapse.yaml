@@ -30,10 +30,26 @@ refinement_policy_config: null
 scheduler:
   hidden_dim: 256
   num_layers: 2
-  # 与预训练 scheduler checkpoint 维度保持一致（4-way）
-  step_options: [0, 1, 2, 5]
-  ddim_steps: [0, 1,2,5]
+  # 精炼步数直接对应 DDIM 推理步数 {0, 1, 2, 5}（4-way）
+  refinement_steps: [0, 1, 2, 5]
   max_refinement_steps: 5
+
+# Stage 4 配置（lightweight_ppo 或 ppo_pegrad）
+stage4:
+  mode: lightweight_ppo
+  reward:
+    cost_type: refinement_steps
+    cost_coef_target: 0.05
+    task_only_epochs: 10
+    cost_warmup_epochs: 20
+  regularization:
+    kl_to_pretrained: false
+    kl_coef: 0.05
+  guard:
+    enable: false
+    eval_every: 5
+    success_tolerance: 0.05
+    rollback_on_drop: true
 
 pegrad:
   task_weight: 1.0

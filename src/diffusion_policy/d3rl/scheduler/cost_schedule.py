@@ -22,6 +22,6 @@ def linear_cost_warmup(
     return float(target) * min(1.0, max(0.0, progress))
 
 
-def refinement_step_cost(refinement_steps, max_refinement_steps: int = 10):
+def refinement_step_cost(refinement_steps, max_refinement_steps: int = 5):
     """Normalize actual refinement steps into [0, 1]."""
     return refinement_steps / float(max_refinement_steps)

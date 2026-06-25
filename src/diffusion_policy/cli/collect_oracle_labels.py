@@ -191,15 +191,15 @@ def create_test_policy(source_policy, refine_policy, k_value, cfg, device):
     
     # 创建一个总是返回固定 k 的 Scheduler
     class FixedKScheduler(nn.Module):
-        def __init__(self, k, step_options):
+        def __init__(self, k, refinement_steps):
             super().__init__()
             self.k = k
-            self.step_options = step_options
-            self.k_idx = step_options.index(k) if k in step_options else 0
-            
+            self.refinement_steps = refinement_steps
+            self.k_idx = refinement_steps.index(k) if k in refinement_steps else 0
+
             # 模拟 AdaScheduler 的接口
-            self.register_buffer('step_options_tensor', 
-                                torch.tensor(step_options, dtype=torch.long))
+            self.register_buffer('refinement_steps_tensor',
+                                torch.tensor(refinement_steps, dtype=torch.long))
         
         def select_action(self, obs, init_action, deterministic=True):
             B = obs.shape[0]
@@ -212,10 +212,9 @@ def create_test_policy(source_policy, refine_policy, k_value, cfg, device):
             
             return steps, k_idx, log_prob, value
     
-    step_options = [0, 1, 2, 5]
-    ddim_steps = [0, 2, 5, 10]
-    scheduler = FixedKScheduler(k_value, step_options).to(device)
-    
+    refinement_steps = [0, 1, 2, 5]
+    scheduler = FixedKScheduler(k_value, refinement_steps).to(device)
+
     policy = AdaBridgerPolicy(
         source_policy=source_policy,
         refinement_policy=refine_policy,
@@ -225,8 +224,7 @@ def create_test_policy(source_policy, refine_policy, k_value, cfg, device):
         action_dim=cfg.policy.action_dim,
         n_action_steps=cfg.policy.n_action_steps,
         n_obs_steps=cfg.policy.n_obs_steps,
-        step_options=step_options,
-        ddim_steps=ddim_steps,
+        refinement_steps=refinement_steps,
         max_refinement_steps=5,
         scheduler_deterministic=True,
         freeze_backbone=True,
@@ -533,9 +531,10 @@ def refine_action_sdedit(refine_policy, obs_dict, init_action, k=10):
     else:
         ddim_scheduler = scheduler
     
-    # 设置推理步数（显式映射）
-    _k_to_ddim = {0: 0, 1: 2, 2: 5, 5: 10}
-    num_inference_steps = _k_to_ddim.get(k, max(int(k * 2), 1))
+    # 精炼步数直接就是 DDIM 推理步数
+    num_inference_steps = int(k)
+    if num_inference_steps <= 0:
+        return init_action
     ddim_scheduler.set_timesteps(num_inference_steps)
     
     # 加噪
@@ -593,10 +592,10 @@ def assign_labels(oracle_samples, threshold=0.1):
         dynamic_threshold = max(threshold, median_diff * 0.5)
         
         if sample['action_diff'] < dynamic_threshold:
-            label = 0  # VAE 够用
+            label = 0  # VAE 够用 → refinement_steps=0
         else:
-            label = 3  # 对应 step_options 中 k=5 的索引
-        
+            label = 3  # 需要精炼 → refinement_steps=5 (最强精炼)
+
         sample['label'] = label
         labels.append(label)
     
@@ -606,10 +605,10 @@ def assign_labels(oracle_samples, threshold=0.1):
         label_counts[l] += 1
     
     print(f"\n标签分布:")
-    step_options = [0, 1, 2, 5]
+    refinement_steps = [0, 1, 2, 5]
     for l, c in sorted(label_counts.items()):
-        k_value = step_options[l] if l < len(step_options) else l
-        print(f"  k={k_value}: {c} ({c/len(labels):.1%})")
+        k_value = refinement_steps[l] if l < len(refinement_steps) else l
+        print(f"  refinement_steps={k_value}: {c} ({c/len(labels):.1%})")
     
     return oracle_samples
 

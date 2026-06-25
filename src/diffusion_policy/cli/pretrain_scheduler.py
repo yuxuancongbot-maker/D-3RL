@@ -68,7 +68,7 @@ def create_scheduler(cfg, device):
         n_obs_steps=cfg.policy.n_obs_steps,
         hidden_dim=256,
         num_layers=2,
-        step_options=[0, 1, 2, 5],
+        refinement_steps=[0, 1, 2, 5],
     )
     scheduler.to(device)
     return scheduler
@@ -291,7 +291,7 @@ def main():
                     'action_dim': cfg.policy.action_dim,
                     'horizon': cfg.policy.horizon,
                     'n_obs_steps': cfg.policy.n_obs_steps,
-                    'step_options': [0, 1, 2, 5],
+                    'refinement_steps': [0, 1, 2, 5],
                 }
             }, os.path.join(args.output_dir, 'scheduler_best.pt'))
             print(f"  [保存最佳模型: val_acc={val_acc:.2%}]")
@@ -307,7 +307,7 @@ def main():
             'action_dim': cfg.policy.action_dim,
             'horizon': cfg.policy.horizon,
             'n_obs_steps': cfg.policy.n_obs_steps,
-'step_options': [0, 1, 2, 5],
+'refinement_steps': [0, 1, 2, 5],
         }
     }, os.path.join(args.output_dir, 'scheduler_final.pt'))
     

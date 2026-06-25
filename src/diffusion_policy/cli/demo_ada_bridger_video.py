@@ -208,7 +208,7 @@ def draw_hud(frame, info, render_size=512):
         ]
     else:
         panel_lines = [
-            f"k = {info.get('k', '?')}  (DDIM {info.get('ddim_steps', '?')} steps)",
+            f"refinement_steps = {info.get('k', '?')}",
             f"Source:    {info.get('source_ms', 0):6.1f} ms",
             f"Scheduler: {info.get('scheduler_ms', 0):6.1f} ms",
             f"Refine:    {info.get('refine_ms', 0):6.1f} ms",
@@ -448,12 +448,9 @@ def record_episode(
     abs_action = cfg.task.get('abs_action', False) if task_type == TASK_ROBOMIMIC else False
     max_steps = cfg.task.env_runner.get('max_steps', 700) if task_type == TASK_ROBOMIMIC else 300
 
-    # Ada-BRIDGER 专用: k → DDIM 映射
-    k_ddim_map = {}
+    # Ada-BRIDGER 专用: refinement_steps 直接就是 DDIM 推理步数
     if policy_type == POLICY_ADA_BRIDGER:
-        step_options = list(cfg.scheduler.step_options)
-        ddim_steps_list = list(cfg.scheduler.ddim_steps)
-        k_ddim_map = dict(zip(step_options, ddim_steps_list))
+        pass  # refinement_steps 值本身就是 DDIM 推理步数，无需映射
 
     # Diffusion 专用: scheduler 名称和步数
     scheduler_name = ''
@@ -518,7 +515,7 @@ def record_episode(
                 'policy_type': POLICY_ADA_BRIDGER,
                 'hz': hz,
                 'k': k_val,
-                'ddim_steps': k_ddim_map.get(k_val, '?'),
+                'ddim_steps': k_val,  # refinement_steps 直接就是 DDIM 推理步数
                 'source_ms': source_ms,
                 'scheduler_ms': scheduler_ms,
                 'refine_ms': refine_ms,

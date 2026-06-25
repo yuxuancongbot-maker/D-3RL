@@ -144,17 +144,20 @@ class TrainAdaBridgerWorkspace(BaseWorkspace):
         
         # ========== 3. 创建 AdaScheduler ==========
         print("Creating Ada-Scheduler...")
-        step_options = list(cfg.scheduler.step_options)
-        ddim_steps = list(cfg.scheduler.ddim_steps)
-        if len(step_options) != len(ddim_steps):
-            raise ValueError(
-                f"scheduler.step_options 与 scheduler.ddim_steps 长度不一致: "
-                f"{len(step_options)} vs {len(ddim_steps)}"
-            )
-        if cfg.scheduler.max_refinement_steps not in step_options:
+        # 统一的精炼步数配置（直接对应 DDIM 推理步数）
+        refinement_steps = list(cfg.scheduler.get(
+            'refinement_steps',
+            cfg.scheduler.get('step_options', [0, 1, 2, 5])
+        ))
+        # 向后兼容：如果旧 config 同时提供 step_options/ddim_steps 且无 refinement_steps，
+        # 使用 ddim_steps 作为实际的精炼步数
+        if 'refinement_steps' not in cfg.scheduler and 'ddim_steps' in cfg.scheduler:
+            refinement_steps = list(cfg.scheduler.ddim_steps)
+
+        if cfg.scheduler.max_refinement_steps not in refinement_steps:
             raise ValueError(
                 f"scheduler.max_refinement_steps={cfg.scheduler.max_refinement_steps} "
-                f"不在 scheduler.step_options={step_options} 中"
+                f"不在 scheduler.refinement_steps={refinement_steps} 中"
             )
 
         scheduler = AdaScheduler(
@@ -164,10 +167,10 @@ class TrainAdaBridgerWorkspace(BaseWorkspace):
             n_obs_steps=cfg.n_obs_steps,
             hidden_dim=cfg.scheduler.hidden_dim,
             num_layers=cfg.scheduler.num_layers,
-            step_options=step_options,
+            refinement_steps=refinement_steps,
         )
-        
-        # 加载预训练的 Scheduler (如果提供)
+
+        # 加载预训练的 Scheduler（Stage 3 输出）
         pretrain_ckpt = cfg.scheduler.get('pretrain_checkpoint', None)
         if pretrain_ckpt is not None and str(pretrain_ckpt).lower() != 'null':
             if not os.path.exists(pretrain_ckpt):
@@ -184,10 +187,42 @@ class TrainAdaBridgerWorkspace(BaseWorkspace):
 
         self._max_refinement_steps = cfg.scheduler.max_refinement_steps
         self._max_step_action_idx = (
-            step_options.index(self._max_refinement_steps)
-            if self._max_refinement_steps in step_options
+            refinement_steps.index(self._max_refinement_steps)
+            if self._max_refinement_steps in refinement_steps
             else None
         )
+
+        # ----- KL 正则化：保存 Stage 3 调度器的冻结副本 -----
+        stage4_cfg = cfg.get('stage4', {})
+        reg_cfg = stage4_cfg.get('regularization', {})
+        self._kl_to_pretrained = reg_cfg.get('kl_to_pretrained', False)
+        self._kl_coef = reg_cfg.get('kl_coef', 0.05)
+        self._frozen_pretrained_scheduler = None
+        if self._kl_to_pretrained:
+            self._frozen_pretrained_scheduler = copy.deepcopy(scheduler)
+            self._frozen_pretrained_scheduler.eval()
+            for p in self._frozen_pretrained_scheduler.parameters():
+                p.requires_grad = False
+            print("  ✓ Created frozen copy of pretrained scheduler for KL regularization")
+
+        # ----- Cost warmup -----
+        reward_cfg = stage4_cfg.get('reward', {})
+        self._cost_coef_target = reward_cfg.get('cost_coef_target', 0.05)
+        self._task_only_epochs = reward_cfg.get('task_only_epochs', 10)
+        self._cost_warmup_epochs = reward_cfg.get('cost_warmup_epochs', 20)
+
+        # ----- Success guard -----
+        guard_cfg = stage4_cfg.get('guard', {})
+        self._guard_enable = guard_cfg.get('enable', False)
+        self._guard_eval_every = guard_cfg.get('eval_every', 5)
+        self._guard_success_tolerance = guard_cfg.get('success_tolerance', 0.05)
+        self._guard_rollback_on_drop = guard_cfg.get('rollback_on_drop', True)
+        self._best_success = -float('inf')
+        self._best_scheduler_state = None
+        self._pretrain_success = None
+
+        # ----- Stage 4 模式 -----
+        self._stage4_mode = stage4_cfg.get('mode', 'lightweight_ppo')
         
         # ========== 4. 创建 Ada-BRIDGER Policy ==========
         self.policy = AdaBridgerPolicyForRL(
@@ -199,13 +234,12 @@ class TrainAdaBridgerWorkspace(BaseWorkspace):
             action_dim=cfg.action_dim,
             n_action_steps=cfg.n_action_steps,
             n_obs_steps=cfg.n_obs_steps,
-            step_options=step_options,
-            ddim_steps=ddim_steps,
+            refinement_steps=refinement_steps,
             max_refinement_steps=cfg.scheduler.max_refinement_steps,
             scheduler_deterministic=False,
             freeze_backbone=True,
         )
-        
+
         # ========== 5. 创建优化器 ==========
         base_optimizer = torch.optim.Adam(
             scheduler.parameters(),
@@ -213,15 +247,25 @@ class TrainAdaBridgerWorkspace(BaseWorkspace):
             betas=tuple(cfg.optimizer.betas),
             eps=cfg.optimizer.eps,
         )
-        
-        self.pegrad_optimizer = PEGradOptimizer(
-            optimizer=base_optimizer,
-            task_weight=cfg.pegrad.task_weight,
-            cost_weight=cfg.pegrad.cost_weight,
-            project_cost_to_task=cfg.pegrad.project_cost_to_task,
-            clip_grad_norm=cfg.pegrad.clip_grad_norm,
-        )
-        
+
+        if self._stage4_mode == 'lightweight_ppo':
+            # lightweight_ppo：标准 Adam + clip PPO，不使用 PEGrad 多目标投影
+            self.pegrad_optimizer = PEGradOptimizer(
+                optimizer=base_optimizer,
+                task_weight=1.0,
+                cost_weight=0.0,
+                project_cost_to_task=False,
+                clip_grad_norm=cfg.ppo.max_grad_norm,
+            )
+        else:
+            self.pegrad_optimizer = PEGradOptimizer(
+                optimizer=base_optimizer,
+                task_weight=cfg.pegrad.task_weight,
+                cost_weight=cfg.pegrad.cost_weight,
+                project_cost_to_task=cfg.pegrad.project_cost_to_task,
+                clip_grad_norm=cfg.pegrad.clip_grad_norm,
+            )
+
         # ========== 6. 创建 PPO 训练器 ==========
         self.ppo_trainer = PPOWithPEGrad(
             policy=self.policy,
@@ -237,6 +281,9 @@ class TrainAdaBridgerWorkspace(BaseWorkspace):
             n_epochs=cfg.ppo.n_epochs,
             batch_size=cfg.ppo.batch_size,
         )
+
+        # ----- 保存 KL 系数供 run() 使用 -----
+        self._scheduler_params = list(scheduler.parameters())
         
         self.global_step = 0
         self.epoch = 0
@@ -365,31 +412,36 @@ class TrainAdaBridgerWorkspace(BaseWorkspace):
         with JsonLogger(log_path) as json_logger:
             for epoch_idx in range(cfg.training.num_epochs):
                 step_log = dict()
-                
+
+                # ----- Cost warmup: 计算当前 λ_cost -----
+                lambda_cost = self._compute_cost_coef(epoch_idx)
+                step_log['train/lambda_cost'] = lambda_cost
+
                 # ========== 收集 Rollouts ==========
                 self.policy.scheduler.train()
                 rollout_info = self._collect_rollouts(
                     env_runner=env_runner,
                     n_rollouts=cfg.training.n_rollouts_per_epoch,
                     device=device,
+                    lambda_cost=lambda_cost,
                 )
-                
+
                 step_log.update({
                     'train/mean_reward': np.mean(rollout_info['episode_rewards']),
                     'train/mean_length': np.mean(rollout_info['episode_lengths']),
                     'train/mean_success': np.mean(rollout_info['episode_successes']),
                     'train/mean_steps': np.mean(rollout_info['avg_refinement_steps']),
                 })
-                
+
                 # 步数分布
                 step_counts = rollout_info['step_distribution']
                 for k, v in step_counts.items():
                     step_log[f'train/step_{k}_ratio'] = v
-                
+
                 # ========== PPO 更新 ==========
                 if len(rollout_info['buffer']) > 0:
                     buffer_data = rollout_info['buffer'].get(device)
-                    
+
                     # 计算 GAE
                     with torch.no_grad():
                         last_obs = buffer_data['obs'][-1:]
@@ -399,33 +451,30 @@ class TrainAdaBridgerWorkspace(BaseWorkspace):
                             last_init_action,
                             deterministic=True,
                         )
-                    
+
                     advantages, returns = self.ppo_trainer.compute_gae(
                         rewards=buffer_data['rewards'],
                         values=buffer_data['values'],
                         dones=buffer_data['dones'],
                         next_value=next_value,
                     )
-                    
-                    # PPO 更新
-                    update_info = self.ppo_trainer.update(
-                        obs=buffer_data['obs'],
-                        init_actions=buffer_data['init_actions'],
-                        actions=buffer_data['actions'],
-                        old_log_probs=buffer_data['log_probs'],
+
+                    # PPO 更新（含可选的 KL 正则化）
+                    update_info = self._ppo_update(
+                        buffer_data=buffer_data,
                         advantages=advantages,
                         returns=returns,
-                        refinement_steps=buffer_data['refinement_steps'],
+                        cfg=cfg,
                     )
-                    
+
                     step_log.update({
                         'train/policy_loss': update_info['policy_loss'],
                         'train/value_loss': update_info['value_loss'],
                         'train/entropy': update_info['entropy'],
                         'train/conflict_ratio': update_info['conflict_ratio'],
                     })
-                
-                # ========== 评估 ==========
+
+                # ========== 评估 + Success Guard ==========
                 if (epoch_idx + 1) % cfg.training.eval_every == 0:
                     self.policy.scheduler.eval()
                     prev_deterministic = self.policy.scheduler_deterministic
@@ -433,12 +482,16 @@ class TrainAdaBridgerWorkspace(BaseWorkspace):
                     eval_log = env_runner.run(self.policy)
                     self.policy.scheduler_deterministic = prev_deterministic
                     step_log.update(eval_log)
-                    
+
                     # 推理统计
                     inference_stats = self.policy.get_inference_stats()
                     step_log['eval/avg_refinement_steps'] = inference_stats.get('avg_steps', 0)
                     if 'avg_total_time' in inference_stats:
                         step_log['eval/avg_inference_time_ms'] = inference_stats['avg_total_time'] * 1000
+
+                    # Success guard
+                    eval_success = float(eval_log.get('test/mean_score', 0.0))
+                    self._apply_success_guard(eval_success, epoch_idx, step_log)
                 
                 # ========== 日志 ==========
                 step_log['global_step'] = self.global_step
@@ -472,6 +525,7 @@ class TrainAdaBridgerWorkspace(BaseWorkspace):
         env_runner,
         n_rollouts: int,
         device: torch.device,
+        lambda_cost: float = 0.0,
     ) -> Dict:
         """
         在环境中收集 rollout 数据用于 PPO 训练
@@ -599,14 +653,15 @@ class TrainAdaBridgerWorkspace(BaseWorkspace):
 
                 n_decisions = len(rollout_data[env_idx])
                 if n_decisions > 0:
-                    # 计算每个决策的奖励
-                    # 使用 reward-to-go 分配最终奖励，并叠加效率惩罚
                     for i, data in enumerate(rollout_data[env_idx]):
                         # 任务奖励（reward-to-go）
                         task_reward = (gamma ** (n_decisions - 1 - i)) * max_reward
 
-                        # 纯任务奖励（效率信号由 PEGrad 在 PPO 更新中通过
-                        # cost_loss 分离处理，不再混入 reward）
+                        # 成本惩罚：r_total = r_task - λ_cost * cost(k)
+                        r_step = int(data['refinement_steps'])
+                        cost = r_step / max(self._max_refinement_steps, 1)
+                        total_reward = task_reward - lambda_cost * cost
+
                         is_done = (i == n_decisions - 1)
 
                         buffer.add(
@@ -615,7 +670,7 @@ class TrainAdaBridgerWorkspace(BaseWorkspace):
                             scheduler_action=data['scheduler_action_idx'],
                             log_prob=data['scheduler_log_prob'],
                             value=data['scheduler_value'],
-                            reward=task_reward,
+                            reward=total_reward,
                             done=is_done,
                             refinement_steps=data['refinement_steps'],
                         )
@@ -637,6 +692,155 @@ class TrainAdaBridgerWorkspace(BaseWorkspace):
             'avg_refinement_steps': avg_refinement_steps_list,
             'step_distribution': step_distribution,
         }
+
+    # ------------------------------------------------------------------
+    # Cost warmup
+    # ------------------------------------------------------------------
+    def _compute_cost_coef(self, epoch_idx: int) -> float:
+        """计算当前 epoch 的 λ_cost（cost warmup）。
+
+        前 task_only_epochs 个 epoch 仅关注任务奖励（λ=0），
+        之后在 cost_warmup_epochs 内线性增加到 target。
+        """
+        if epoch_idx < self._task_only_epochs:
+            return 0.0
+        progress = min(1.0, (epoch_idx - self._task_only_epochs) / max(1, self._cost_warmup_epochs))
+        return self._cost_coef_target * progress
+
+    # ------------------------------------------------------------------
+    # PPO update with optional KL regularization
+    # ------------------------------------------------------------------
+    def _ppo_update(self, buffer_data, advantages, returns, cfg):
+        """执行 PPO 更新，可选 KL 到 pretrained scheduler。"""
+        if self._stage4_mode == 'lightweight_ppo':
+            return self._ppo_update_lightweight(buffer_data, advantages, returns, cfg)
+        else:
+            return self.ppo_trainer.update(
+                obs=buffer_data['obs'],
+                init_actions=buffer_data['init_actions'],
+                actions=buffer_data['actions'],
+                old_log_probs=buffer_data['log_probs'],
+                advantages=advantages,
+                returns=returns,
+                refinement_steps=buffer_data['refinement_steps'],
+            )
+
+    def _ppo_update_lightweight(self, buffer_data, advantages, returns, cfg):
+        """轻量级 PPO 更新（无 PEGrad，可选 KL 正则化）。"""
+        obs = buffer_data['obs']
+        init_actions = buffer_data['init_actions']
+        actions = buffer_data['actions']
+        old_log_probs = buffer_data['log_probs']
+
+        # 标准化 advantage
+        adv = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
+
+        total_policy_loss = 0.0
+        total_value_loss = 0.0
+        total_entropy = 0.0
+        total_kl_loss = 0.0
+        n_updates = 0
+
+        for _ in range(cfg.ppo.n_epochs):
+            indices = torch.randperm(len(obs))
+            for start in range(0, len(obs), cfg.ppo.batch_size):
+                end = start + cfg.ppo.batch_size
+                idx = indices[start:end]
+
+                batch_obs = obs[idx]
+                batch_init = init_actions[idx]
+                batch_act = actions[idx]
+                batch_old_lp = old_log_probs[idx]
+                batch_adv = adv[idx]
+                batch_ret = returns[idx]
+
+                new_log_probs, entropy, values = self.policy.evaluate_scheduler_actions(
+                    batch_obs, batch_init, batch_act
+                )
+
+                ratio = torch.exp(new_log_probs - batch_old_lp)
+                surr1 = ratio * batch_adv
+                surr2 = torch.clamp(ratio, 1.0 - cfg.ppo.clip_epsilon, 1.0 + cfg.ppo.clip_epsilon) * batch_adv
+                policy_loss = -torch.min(surr1, surr2).mean()
+
+                value_loss = nn.functional.mse_loss(values, batch_ret)
+                entropy_loss = -entropy.mean()
+
+                loss = (policy_loss
+                        + cfg.ppo.value_loss_coef * value_loss
+                        + cfg.ppo.entropy_coef * entropy_loss)
+
+                # KL 正则化到 pretrained scheduler
+                kl_loss_val = 0.0
+                if self._kl_to_pretrained and self._frozen_pretrained_scheduler is not None:
+                    train_logits, _ = self.policy.scheduler.forward(batch_obs, batch_init)
+                    with torch.no_grad():
+                        frozen_logits, _ = self._frozen_pretrained_scheduler.forward(batch_obs, batch_init)
+                    kl_loss_val = nn.functional.kl_div(
+                        nn.functional.log_softmax(train_logits, dim=-1),
+                        nn.functional.softmax(frozen_logits, dim=-1),
+                        reduction='batchmean',
+                    )
+                    loss = loss + self._kl_coef * kl_loss_val
+
+                self.pegrad_optimizer.zero_grad()
+                loss.backward()
+                if cfg.ppo.max_grad_norm is not None:
+                    nn.utils.clip_grad_norm_(
+                        self._scheduler_params, cfg.ppo.max_grad_norm
+                    )
+                self.pegrad_optimizer.step()
+
+                total_policy_loss += policy_loss.item()
+                total_value_loss += value_loss.item()
+                total_entropy += entropy.mean().item()
+                total_kl_loss += (kl_loss_val.item() if isinstance(kl_loss_val, torch.Tensor) else kl_loss_val)
+                n_updates += 1
+
+        return {
+            'policy_loss': total_policy_loss / max(n_updates, 1),
+            'value_loss': total_value_loss / max(n_updates, 1),
+            'entropy': total_entropy / max(n_updates, 1),
+            'conflict_ratio': total_kl_loss / max(n_updates, 1),  # repurpose as KL loss
+        }
+
+    # ------------------------------------------------------------------
+    # Success guard
+    # ------------------------------------------------------------------
+    def _apply_success_guard(self, eval_success: float, epoch_idx: int, step_log: dict):
+        """Success guard: 检测成功率下降并回滚。"""
+        if not self._guard_enable:
+            return
+
+        if self._pretrain_success is None:
+            self._pretrain_success = eval_success
+            self._best_success = eval_success
+            self._best_scheduler_state = {
+                k: v.clone() for k, v in self.policy.scheduler.state_dict().items()
+            }
+            step_log['guard/pretrain_success'] = self._pretrain_success
+            return
+
+        step_log['guard/pretrain_success'] = self._pretrain_success
+        step_log['guard/best_success'] = self._best_success
+
+        if eval_success > self._best_success:
+            self._best_success = eval_success
+            self._best_scheduler_state = {
+                k: v.clone() for k, v in self.policy.scheduler.state_dict().items()
+            }
+            print(f"  [Guard] New best success: {eval_success:.4f}")
+            return
+
+        drop = self._best_success - eval_success
+        if drop > self._guard_success_tolerance and self._guard_rollback_on_drop:
+            print(f"  [Guard] Success dropped by {drop:.4f} (> {self._guard_success_tolerance}), "
+                  f"rolling back to best (success={self._best_success:.4f})")
+            if self._best_scheduler_state is not None:
+                self.policy.scheduler.load_state_dict(self._best_scheduler_state)
+            step_log['guard/rollback'] = 1
+        else:
+            step_log['guard/rollback'] = 0
 
 
 @hydra.main(

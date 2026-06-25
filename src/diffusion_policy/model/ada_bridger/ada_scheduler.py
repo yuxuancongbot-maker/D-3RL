@@ -125,14 +125,17 @@ class ActionAwareEncoder(nn.Module):
 class AdaScheduler(nn.Module):
     """
     自适应调度器 (Ada-Scheduler)
-    
-    输入观测和初始动作，输出精炼步数的分类分布
+
+    输入观测和初始动作，输出精炼步数的分类分布。
+    精炼步数直接对应 DDIM 推理步数（0, 2, 5, 10），
+    不再使用中间 budget level 做二次映射。
     支持离散动作空间 {0, 2, 5, 10}
     """
-    
-    # 预定义的精炼步数选项
-    STEP_OPTIONS = [0, 2, 5, 10]
-    
+
+    # 预定义的精炼步数选项（直接对应 DDIM 推理步数）
+    # 保持 [0, 1, 2, 5] 以兼容已训练的 4-way scheduler checkpoint
+    REFINEMENT_STEPS = [0, 1, 2, 5]
+
     def __init__(
         self,
         obs_dim: int,
@@ -141,19 +144,27 @@ class AdaScheduler(nn.Module):
         n_obs_steps: int,
         hidden_dim: int = 256,
         num_layers: int = 2,
+        refinement_steps: List[int] = None,
+        # ---- 向后兼容 ----
         step_options: List[int] = None,
     ):
         super().__init__()
-        
+
         self.obs_dim = obs_dim
         self.action_dim = action_dim
         self.action_horizon = action_horizon
         self.n_obs_steps = n_obs_steps
-        
-        # 可配置的步数选项
-        self.step_options = step_options or self.STEP_OPTIONS
-        self.num_actions = len(self.step_options)
-        
+
+        # 可配置的精炼步数（直接就是 DDIM 推理步数）
+        # 向后兼容：step_options 在 refinement_steps 未提供时作为回退
+        if refinement_steps is not None:
+            self.refinement_steps = list(refinement_steps)
+        elif step_options is not None:
+            self.refinement_steps = list(step_options)
+        else:
+            self.refinement_steps = list(self.REFINEMENT_STEPS)
+        self.num_actions = len(self.refinement_steps)
+
         # 动作感知编码器
         self.encoder = ActionAwareEncoder(
             obs_dim=obs_dim,
@@ -163,33 +174,43 @@ class AdaScheduler(nn.Module):
             hidden_dim=hidden_dim,
             num_layers=num_layers,
         )
-        
+
         # 策略头 (Actor) - 输出步数分布
         self.policy_head = nn.Sequential(
             nn.Linear(hidden_dim, hidden_dim),
             nn.ReLU(),
             nn.Linear(hidden_dim, self.num_actions),
         )
-        
+
         # 初始化：让调度器一开始倾向选择 k=0（不精炼）
         # 这样可以保证初始性能不会比 source policy 差
         # 随着训练进行，调度器会学习何时需要精炼
         with torch.no_grad():
             # 给 k=0 的 logit 加一个正偏置
             self.policy_head[-1].bias[0] = 3.0  # 初始时 ~95% 概率选 k=0
-        
+
         # 价值头 (Critic) - 输出状态价值
         self.value_head = nn.Sequential(
             nn.Linear(hidden_dim, hidden_dim),
             nn.ReLU(),
             nn.Linear(hidden_dim, 1),
         )
-        
-        # 注册步数选项为buffer (用于快速查找)
+
+        # 注册精炼步数选项为buffer (用于快速查找)
         self.register_buffer(
-            'step_options_tensor', 
-            torch.tensor(self.step_options, dtype=torch.long)
+            'refinement_steps_tensor',
+            torch.tensor(self.refinement_steps, dtype=torch.long)
         )
+
+    @property
+    def step_options(self) -> List[int]:
+        """向后兼容：返回 refinement_steps 的副本。"""
+        return list(self.refinement_steps)
+
+    @property
+    def step_options_tensor(self) -> torch.Tensor:
+        """向后兼容：返回 refinement_steps_tensor。"""
+        return self.refinement_steps_tensor
     
     def forward(
         self, 
@@ -262,9 +283,9 @@ class AdaScheduler(nn.Module):
             action_idx = dist.sample()
         
         log_prob = dist.log_prob(action_idx)
-        
-        # 转换为实际步数
-        steps = self.step_options_tensor[action_idx]
+
+        # 转换为实际精炼步数（直接对应 DDIM 推理步数）
+        steps = self.refinement_steps_tensor[action_idx]
         
         return steps, action_idx, log_prob, value.squeeze(-1)
     
@@ -304,7 +325,8 @@ class AdaSchedulerForImages(AdaScheduler):
         action_horizon: int,
         n_obs_steps: int,
         hidden_dim: int = 256,
-        step_options: List[int] = None,
+        refinement_steps: List[int] = None,
+        step_options: List[int] = None,  # 向后兼容
         freeze_encoder: bool = True,
     ):
         # 先调用父类初始化，使用feature_dim作为obs_dim
@@ -314,6 +336,7 @@ class AdaSchedulerForImages(AdaScheduler):
             action_horizon=action_horizon,
             n_obs_steps=n_obs_steps,
             hidden_dim=hidden_dim,
+            refinement_steps=refinement_steps,
             step_options=step_options,
         )
         

@@ -40,17 +40,22 @@ class VAEConditionalMLP(nn.Module):
 
     ``load_state_dict`` automatically detects which architecture the checkpoint
     was trained with and rebuilds the networks accordingly before loading.
+
+    When ``prev_action_dim > 0``, the decoder receives the previous action chunk
+    as additional conditioning (BRIDGER-style temporal feedback).
     """
 
     def __init__(self, action_dim: int, pred_horizon: int, global_cond_dim: int,
-                 latent_dim: int, layer: int, use_dropout: bool = False):
+                 latent_dim: int, layer: int, use_dropout: bool = False,
+                 prev_action_dim: int = 0):
         super().__init__()
         self.action_dim = action_dim
         self.pred_horizon = pred_horizon
         self.latent_dim = latent_dim
         self._input_dim = global_cond_dim + action_dim * pred_horizon
         self._hidden_dim = layer
-        self._decoder_input_dim = global_cond_dim + latent_dim
+        self._decoder_input_dim = global_cond_dim + latent_dim + prev_action_dim
+        self._prev_action_dim = prev_action_dim
 
         self._build_nets(use_dropout)
         self.encoder_mean = nn.Linear(layer, latent_dim)
@@ -93,10 +98,16 @@ class VAEConditionalMLP(nn.Module):
             )
 
     def load_state_dict(self, state_dict, strict=True):
-        """自动探测 checkpoint 架构（有无 Dropout）并重建网络后加载权重。"""
-        # encoder_net.3.weight 存在 → Dropout 版（idx 3 是第二个 Linear）
-        # encoder_net.2.weight 存在 → 无 Dropout 版（idx 2 是第二个 Linear）
+        """自动探测 checkpoint 架构（有无 Dropout，有无 prev_action）并重建网络后加载权重。"""
         has_dropout = any(k.startswith('encoder_net.3.') for k in state_dict)
+        # Detect prev_action_dim from decoder input weight shape
+        dec_w_key = 'decoder_net.0.weight'
+        if dec_w_key in state_dict:
+            ckpt_dec_in = state_dict[dec_w_key].shape[1]
+            ckpt_prev_dim = ckpt_dec_in - self._decoder_input_dim + self._prev_action_dim
+            if ckpt_prev_dim != self._prev_action_dim:
+                self._prev_action_dim = ckpt_prev_dim
+                self._decoder_input_dim = ckpt_dec_in
         self._build_nets(use_dropout=has_dropout)
         return super().load_state_dict(state_dict, strict=strict)
 
@@ -107,7 +118,15 @@ class VAEConditionalMLP(nn.Module):
         std = torch.exp(logstd)
         return dist.Normal(mean, std)
 
-    def decoder(self, x: torch.Tensor) -> torch.Tensor:
+    def decoder(self, x: torch.Tensor, prev_action: torch.Tensor = None) -> torch.Tensor:
+        if self._prev_action_dim > 0:
+            if prev_action is not None:
+                x = torch.cat([x, prev_action], dim=-1)
+            else:
+                # 第一步推理时无 prev_action，零填充
+                zeros = torch.zeros(x.shape[0], self._prev_action_dim,
+                                    device=x.device, dtype=x.dtype)
+                x = torch.cat([x, zeros], dim=-1)
         return self.decoder_net(x)
 
 
@@ -124,19 +143,23 @@ class VAEModel(nn.Module):
         layer: int,
         use_ema: bool = True,
         pretrain: bool = False,
-        ckpt_path: Optional[str] = None
+        ckpt_path: Optional[str] = None,
+        prev_action_horizon: int = 0,
     ):
         super().__init__()
 
         self.pred_horizon = action_horizon
         self.action_dim = action_dim
+        self.prev_action_horizon = prev_action_horizon
+        self._prev_action_dim = action_dim * prev_action_horizon
 
         self.net = VAEConditionalMLP(
             action_dim=action_dim,
             pred_horizon=action_horizon,
             global_cond_dim=obs_dim * obs_horizon,
             latent_dim=latent_dim,
-            layer=layer
+            layer=layer,
+            prev_action_dim=self._prev_action_dim,
         )
 
         self.ema = ExponentialMovingAverage(self.net.parameters(), decay=0.99) if use_ema else None
@@ -149,17 +172,39 @@ class VAEModel(nn.Module):
             if self.ema is not None:
                 self.ema.load_state_dict(checkpoint["ema"])
 
-    def sample(self, cond: torch.Tensor, x_prior=None, diffuse_step=None) -> torch.Tensor:
-        """Sample actions given condition (flattened observations)."""
+    def sample(self, cond: torch.Tensor, prev_action: torch.Tensor = None,
+               x_prior=None, diffuse_step=None) -> torch.Tensor:
+        """Sample actions given condition (flattened observations).
+
+        Args:
+            cond: [B, obs_dim * obs_horizon] flattened observations
+            prev_action: optional [B, prev_action_horizon, action_dim] previous action chunk
+        """
         num_sample = cond.shape[0]
         latent = torch.randn((num_sample, self.net.latent_dim), device=cond.device)
-        action_flat = self.net.decoder(torch.cat([cond, latent], dim=-1))
+        decoder_input = torch.cat([cond, latent], dim=-1)
+        if prev_action is not None and self._prev_action_dim > 0:
+            prev_flat = prev_action.reshape(num_sample, -1).to(device=cond.device, dtype=cond.dtype)
+        else:
+            prev_flat = None
+        action_flat = self.net.decoder(decoder_input, prev_action=prev_flat)
         return action_flat.reshape(-1, self.net.pred_horizon, self.net.action_dim)
 
     def get_loss(self, batch_dict: Dict[str, torch.Tensor],
                  loss_args: Dict, device: torch.device) -> Tuple[torch.Tensor, Dict]:
         nobs = batch_dict['obs'].to(device).float().flatten(start_dim=1)
         naction = batch_dict['action'].to(device).float()
+
+        # prev_action for decoder conditioning (optional, 零填充 fallback)
+        prev_action = batch_dict.get('prev_action', None)
+        if self._prev_action_dim > 0:
+            if prev_action is not None:
+                prev_flat = prev_action.to(device).float().flatten(start_dim=1)
+            else:
+                prev_flat = torch.zeros(nobs.shape[0], self._prev_action_dim,
+                                        device=device, dtype=nobs.dtype)
+        else:
+            prev_flat = None
 
         latent_post_dist = self.net.encoder(torch.cat([nobs, naction.flatten(1)], dim=-1))
         latent_post_rsample = latent_post_dist.rsample()
@@ -169,14 +214,17 @@ class VAEModel(nn.Module):
         latent_prior_mean = torch.zeros_like(latent_post_mean, device=device)
         latent_prior_std = torch.ones_like(latent_post_std, device=device)
 
-        action_rec = self.net.decoder(torch.cat([nobs, latent_post_rsample], dim=-1))
-        rec_loss = torch.nn.functional.mse_loss(action_rec, naction.flatten(1)) * 1.0  # 降低重构权重
+        action_rec = self.net.decoder(
+            torch.cat([nobs, latent_post_rsample], dim=-1),
+            prev_action=prev_flat,
+        )
+        rec_loss = torch.nn.functional.mse_loss(action_rec, naction.flatten(1)) * 1.0
         kl_loss = self.anneal_factor * kl_divergence_normal(latent_post_mean,
                                                             latent_prior_mean,
                                                             latent_post_std,
                                                             latent_prior_std)
 
-        self.anneal_factor = min(self.anneal_factor + 0.001, 2.0)  # 加快 KL 退火，上限提高到 2.0
+        self.anneal_factor = min(self.anneal_factor + 0.001, 2.0)
 
         loss = rec_loss + kl_loss
         return loss, {'loss': loss, 'kl_loss': kl_loss, 'rec_loss': rec_loss}

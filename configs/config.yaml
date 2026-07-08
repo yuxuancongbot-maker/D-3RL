@@ -40,6 +40,7 @@ source_policy_checkpoint: ${oc.select:experiment.source_policy_checkpoint,null}
 source_policy_config: ${oc.select:experiment.source_policy_config,null}
 refinement_policy_checkpoint: ${oc.select:experiment.refinement_policy_checkpoint,null}
 refinement_policy_config: ${oc.select:experiment.refinement_policy_config,null}
+output_dir: ${oc.select:experiment.output_dir,null}
 
 multi_run:
   run_dir: outputs/${now:%Y.%m.%d}/${now:%H.%M.%S}_${name}_${task.name}

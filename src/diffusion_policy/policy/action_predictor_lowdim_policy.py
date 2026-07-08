@@ -121,20 +121,34 @@ class ActionPredictorLowdimPolicy(BaseLowdimPolicy):
         dtype = self.dtype
         
         if self.backend == 'vae':
-            # 对VAE，使用观测进行条件采样，无需prev_action
+            # VAE 采样：obs 条件 + 可选的 prev_action 反馈
             obs = nobs[:, :To]
             cond = obs.reshape(B, -1)
+
+            # 处理 prev_action（BRIDGER 反馈回路）
+            nprev_action = None
+            if prev_action is not None:
+                nprev_action = self.normalizer['action'].normalize(prev_action)
+            elif self._prev_action is not None:
+                nprev_action = self._prev_action
+            if nprev_action is not None:
+                nprev_action = nprev_action.to(device=device, dtype=dtype)
+
             self.model.eval()
             with torch.no_grad():
-                naction_pred = self.model.sample(cond=cond)
+                naction_pred = self.model.sample(cond=cond, prev_action=nprev_action)
             if use_cuda_timing:
                 e2.record()
             else:
                 t2 = time.perf_counter()
             action_pred = self.normalizer['action'].unnormalize(naction_pred)
             action = action_pred[:, :self.n_action_steps]
-            # VAE 不维护自回归prev_action
-            self._prev_action = None
+            # 保存 VAE 预测的前 prev_action_horizon 步供下一步使用
+            pa_horizon = getattr(self.model, 'prev_action_horizon', 0) or self.prev_action_horizon
+            if pa_horizon > 0:
+                self._prev_action = naction_pred[:, :pa_horizon].clone()
+            else:
+                self._prev_action = None
         else:
             # transformer 分支，保留原逻辑
             if prev_action is not None:
@@ -272,8 +286,12 @@ class ActionPredictorLowdimPolicy(BaseLowdimPolicy):
             self.model.to(obs.device)
             pred_horizon = getattr(self.model, 'pred_horizon', self.horizon)
             action = nbatch['action'][:, :pred_horizon]
+            # 传递 prev_action（如果可用）
+            batch_for_vae = {'obs': obs, 'action': action}
+            if 'prev_action' in nbatch:
+                batch_for_vae['prev_action'] = nbatch['prev_action']
             loss, _ = self.model.get_loss(
-                {'obs': obs, 'action': action},
+                batch_for_vae,
                 loss_args={'prior_policy': 'action'},
                 device=obs.device
             )

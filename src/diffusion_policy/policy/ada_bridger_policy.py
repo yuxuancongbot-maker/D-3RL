@@ -78,10 +78,12 @@ class AdaBridgerPolicy(nn.Module):
 
         # 冻结 backbone
         if freeze_backbone:
-            for p in self.source_policy.parameters():
-                p.requires_grad = False
-            for p in self.refinement_policy.parameters():
-                p.requires_grad = False
+            if self.source_policy is not None:
+                for p in self.source_policy.parameters():
+                    p.requires_grad = False
+            if self.refinement_policy is not None:
+                for p in self.refinement_policy.parameters():
+                    p.requires_grad = False
 
         # 预注册 normalizer（确保 load_state_dict 时 key 存在）
         self._normalizer = LinearNormalizer()
@@ -163,6 +165,8 @@ class AdaBridgerPolicy(nn.Module):
             self.source_policy.reset()
         self._inference_stats = []
         self._skip_first_timing = True
+        # BRIDGER feedback: 保存上一步 refined action 供下一步 VAE 使用
+        self._last_refined_action = None
 
     # ------------------------------------------------------------------
     # Core Inference
@@ -193,9 +197,15 @@ class AdaBridgerPolicy(nn.Module):
         else:
             t_start = time.perf_counter()
 
-        # 1) Source policy 产生初始动作
+        # 1) Source policy 产生初始动作（带 BRIDGER 反馈回路）
+        prev_action = getattr(self, '_last_refined_action', None)
+        if prev_action is not None:
+            # 只取 prev_action_horizon 步（source policy 决定需要多少步）
+            pa_horizon = getattr(self.source_policy, 'prev_action_horizon', self.horizon)
+            prev_action = prev_action[:, :pa_horizon]
         with torch.no_grad():
-            source_result = self.source_policy.predict_action(obs_dict)
+            source_result = self.source_policy.predict_action(
+                obs_dict, prev_action=prev_action)
         init_action = source_result['action_pred']  # [B, horizon, action_dim]
 
         if use_cuda_timing:
@@ -248,8 +258,13 @@ class AdaBridgerPolicy(nn.Module):
             refine_time = t_refine - t_scheduler
             total_time = t_refine - t_start
 
-        # 4) 截取执行部分
+        # 4) 截取执行部分，保护 NaN/Inf/极端值防止 MuJoCo 崩溃
         action = refined_action[:, :self.n_action_steps]
+        action = torch.nan_to_num(action, nan=0.0, posinf=2.0, neginf=-2.0)
+        action = torch.clamp(action, -5.0, 5.0)
+
+        # 保存 refined action 供下一步 feedback
+        self._last_refined_action = refined_action.detach().clone()
 
         # 记录推理统计（跳过首个样本，避免 CUDA warmup/JIT 污染均值）
         if self._skip_first_timing:
@@ -287,11 +302,33 @@ class AdaBridgerPolicy(nn.Module):
         k: int,
     ) -> torch.Tensor:
         """
-        通过 SDEdit 精炼初始动作
+        精炼初始动作。
 
-        复用 collect_oracle_labels.py 中的 refine_action_sdedit 逻辑。
+        如果 refinement_policy 是 SI refiner（有 sample 方法），
+        直接用 SI ODE 正向积分。否则回退到 DDIM warm-start。
         """
         refine_policy = self.refinement_policy
+
+        # ── SI refiner fast-path ──────────────────────────────────
+        if hasattr(refine_policy, 'sample'):
+            obs = obs_dict['obs']
+            B = obs.shape[0]
+            nobs = refine_policy.normalizer['obs'].normalize(obs[:, :self.n_obs_steps])
+            # UNet 需 flat [B, Dc]; Transformer 需 [B, To, Do]
+            if getattr(refine_policy, '_combined_forward', False):
+                global_cond = nobs  # [B, To, Do]
+                obs_flat_for_vae = nobs.reshape(B, -1)
+            else:
+                global_cond = nobs.reshape(B, -1)  # [B, Dc]
+                obs_flat_for_vae = global_cond
+            # 训练用 VAE.model.sample() → 推理也保持一致（随机采样，不是确定性均值）
+            prior_normalized = self.source_policy.model.sample(obs_flat_for_vae)
+            refined = refine_policy.sample(
+                x0=prior_normalized, cond=global_cond, num_steps=int(k),
+            )
+            return refine_policy.normalizer['action'].unnormalize(refined)
+
+        # ── DDIM warm-start (legacy) ──────────────────────────────
         noise_scheduler = refine_policy.noise_scheduler
         model = refine_policy.model
         normalizer = refine_policy.normalizer

@@ -395,7 +395,10 @@ class TrainAdaBridgerWorkspace(BaseWorkspace):
             config=OmegaConf.to_container(cfg, resolve=True),
             **cfg.logging
         )
-        wandb.config.update({"output_dir": self.output_dir})
+        try:
+            wandb.config.update({"output_dir": self.output_dir})
+        except Exception:
+            pass  # wandb 可能不允许更新 output_dir
         
         # Checkpoint manager
         topk_manager = TopKCheckpointManager(
@@ -504,9 +507,11 @@ class TrainAdaBridgerWorkspace(BaseWorkspace):
                 if (epoch_idx + 1) % cfg.training.checkpoint_every == 0:
                     # 保存最新
                     self.save_checkpoint()
-                    
-                    # TopK
+
+                    # TopK (normalize / → _ in keys for format string compatibility)
                     if 'test/mean_score' in step_log:
+                        # str.format() 不支持 / 在 keyword arg 中
+                        step_log['test_mean_score'] = step_log['test/mean_score']
                         topk_ckpt_path = topk_manager.get_ckpt_path(step_log)
                         if topk_ckpt_path is not None:
                             self.save_checkpoint(path=topk_ckpt_path)
@@ -547,10 +552,14 @@ class TrainAdaBridgerWorkspace(BaseWorkspace):
         for rollout_idx in range(n_rollouts):
             self.policy.reset()
             
-            # 初始化环境
+            # 初始化环境（可能因上次崩溃残留而失败）
             init_fn_dill = env_runner.env_init_fn_dills[rollout_idx % len(env_runner.env_init_fn_dills)]
-            env.call_each('run_dill_function', args_list=[(init_fn_dill,)] * n_envs)
-            
+            try:
+                env.call_each('run_dill_function', args_list=[(init_fn_dill,)] * n_envs)
+            except Exception:
+                env.reset()  # 清除 pending 状态后重试
+                env.call_each('run_dill_function', args_list=[(init_fn_dill,)] * n_envs)
+
             obs = env.reset()
             past_action_for_policy = None
             done_arr = np.zeros(n_envs, dtype=bool)
@@ -623,8 +632,19 @@ class TrainAdaBridgerWorkspace(BaseWorkspace):
                         neginf=-1.0,
                     )
                 
-                # Step 环境
-                obs, reward, done_arr, info = env.step(action_for_env)
+                # Step 环境（捕获 MuJoCo 物理崩溃，重置 env 并跳过该 rollout）
+                try:
+                    obs, reward, done_arr_new, info = env.step(action_for_env)
+                except Exception as e:
+                    print(f"  [WARN] env.step failed: {e}, resetting all envs")
+                    done_arr_new = np.ones(n_envs, dtype=bool)
+                    reward = [0.0] * n_envs
+                    info = [{}] * n_envs
+                    try:
+                        obs = env.reset()
+                    except Exception:
+                        pass  # reset 也可能失败，那就跳过整个 rollout
+                done_arr = done_arr | done_arr_new
                 episode_length += (~done_arr).astype(np.int32) * action_for_env.shape[1]
 
                 # 记录该 episode 的最大即时奖励（回退用）
@@ -638,8 +658,11 @@ class TrainAdaBridgerWorkspace(BaseWorkspace):
                         else:
                             episode_max_reward[env_idx] = max(episode_max_reward[env_idx], reward_val)
             
-            # Episode 结束，获取最终奖励
-            final_rewards = env.call('get_attr', 'reward')
+            # Episode 结束，获取最终奖励（步骤崩溃时回退到 per-step 奖励）
+            try:
+                final_rewards = env.call('get_attr', 'reward')
+            except Exception:
+                final_rewards = None
             gamma = cfg.ppo.gamma
 
             for env_idx in range(n_envs):

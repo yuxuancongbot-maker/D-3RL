@@ -182,12 +182,11 @@ class AdaScheduler(nn.Module):
             nn.Linear(hidden_dim, self.num_actions),
         )
 
-        # 初始化：让调度器一开始倾向选择 k=0（不精炼）
-        # 这样可以保证初始性能不会比 source policy 差
-        # 随着训练进行，调度器会学习何时需要精炼
+        # 初始化：让调度器一开始倾向选择最大精炼步数（DDPM 天花板）
+        # PPO 训练会逐渐学会在安全状态下降级到 k=0
         with torch.no_grad():
-            # 给 k=0 的 logit 加一个正偏置
-            self.policy_head[-1].bias[0] = 3.0  # 初始时 ~95% 概率选 k=0
+            # 给最大 k 的 logit 加一个正偏置（最后一个 action）
+            self.policy_head[-1].bias[-1] = 3.0  # 初始时 ~95% 概率选最大 k
 
         # 价值头 (Critic) - 输出状态价值
         self.value_head = nn.Sequential(

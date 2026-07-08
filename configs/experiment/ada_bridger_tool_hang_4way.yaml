@@ -1,15 +1,12 @@
-# Ada-BRIDGER PushT anti-collapse config
-# 目标：避免 scheduler 早期塌缩到 k=0，同时保证任务分数先起来
-
-name: train_ada_bridger_pusht_anti_collapse
+# Ada-BRIDGER tool_hang — 4-way {0,1,2,5} + K5-bias PPO (PushT SOTA method)
+name: train_ada_bridger_tool_hang_4way
 _target_: diffusion_policy.workspace.train_ada_bridger_workspace.TrainAdaBridgerWorkspace
 
-obs_dim: ${task.obs_dim}
-action_dim: ${task.action_dim}
+obs_dim: 53
+action_dim: 10
 task_name: ${task.name}
-exp_name: "ada_bridger"
+exp_name: "ada_bridger_tool_hang_4way"
 
-# PushT 常用序列参数
 horizon: 16
 n_obs_steps: 2
 n_action_steps: 8
@@ -17,53 +14,42 @@ n_latency_steps: 0
 past_action_visible: False
 keypoint_visible_rate: 1.0
 
-# 预训练模型
-source_policy_checkpoint: "weights/lowdim/predictor/vae/vae_pusht_lowdim/checkpoints/latest.ckpt"
+source_policy_checkpoint: "weights/lowdim/predictor/vae/vae_tool_hang_lowdim/checkpoints/latest.ckpt"
 source_policy_config: null
-refinement_policy_checkpoint: "weights/lowdim/diffusion/pusht/cnn/latest.ckpt"
+refinement_policy_checkpoint: "weights/lowdim/diffusion/robomimic/cnn/tool_hang/epoch=0850-test_mean_score=0.818.ckpt"
 refinement_policy_config: null
 
 scheduler:
   hidden_dim: 256
   num_layers: 2
-  # 精炼步数直接对应 DDIM 推理步数 {0, 1, 2, 5}（4-way）
   refinement_steps: [0, 1, 2, 5]
   max_refinement_steps: 5
 
-# Stage 4 配置（lightweight_ppo 或 ppo_pegrad）
 stage4:
   mode: lightweight_ppo
   reward:
     cost_type: refinement_steps
-    cost_coef_target: 0.05
-    task_only_epochs: 10
-    cost_warmup_epochs: 20
+    cost_coef_target: 0.0
+    task_only_epochs: 300
+    cost_warmup_epochs: 0
   regularization:
     kl_to_pretrained: false
     kl_coef: 0.05
   guard:
-    enable: false
-    eval_every: 5
-    success_tolerance: 0.05
+    enable: true
+    eval_every: 10
+    success_tolerance: 0.03
     rollback_on_drop: true
-
-pegrad:
-  task_weight: 1.0
-  cost_weight: 0.1
-  project_cost_to_task: True
-  clip_grad_norm: 0.5
 
 ppo:
   clip_epsilon: 0.2
   value_loss_coef: 0.5
-  # 提高探索，防止早期策略塌缩到单一 k
-  entropy_coef: 0.15
+  entropy_coef: 0.05
   max_grad_norm: 0.5
-  # 第一阶段先弱化效率惩罚，让策略先学会做对任务
-  efficiency_coef: 0.001
+  efficiency_coef: 0.0
   gamma: 0.99
   gae_lambda: 0.95
-  n_epochs: 4
+  n_epochs: 8
   batch_size: 64
 
 optimizer:
@@ -76,15 +62,14 @@ training:
   seed: 42
   debug: False
   resume: False
-  num_epochs: 500
-  # 提高 rollout 数量，降低 PPO 高方差导致的塌缩
+  num_epochs: 300
   n_rollouts_per_epoch: 6
   eval_every: 10
   checkpoint_every: 50
   tqdm_interval_sec: 1.0
 
 logging:
-  project: ada_bridger_pusht
+  project: ada_bridger_tool_hang
   resume: True
   mode: online
   name: ${now:%Y.%m.%d-%H.%M.%S}_${name}_${task_name}
@@ -100,6 +85,7 @@ checkpoint:
     format_str: 'epoch={epoch:04d}-test_mean_score={test_mean_score:.3f}.ckpt'
   save_last_ckpt: True
   save_last_snapshot: False
+
 
 multi_run:
   run_dir: data/outputs/${now:%Y.%m.%d}/${now:%H.%M.%S}_${name}_${task_name}

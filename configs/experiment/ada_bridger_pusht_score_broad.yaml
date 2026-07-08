@@ -1,13 +1,13 @@
-# Ada-BRIDGER PushT anti-collapse config
-# 目标：避免 scheduler 早期塌缩到 k=0，同时保证任务分数先起来
+# Ada-BRIDGER PushT — score-focused config
+# 目标：最大化测试集成功率，不关心 latency
 
-name: train_ada_bridger_pusht_anti_collapse
+name: train_ada_bridger_pusht_score
 _target_: diffusion_policy.workspace.train_ada_bridger_workspace.TrainAdaBridgerWorkspace
 
 obs_dim: ${task.obs_dim}
 action_dim: ${task.action_dim}
 task_name: ${task.name}
-exp_name: "ada_bridger"
+exp_name: "ada_bridger_score"
 
 # PushT 常用序列参数
 horizon: 16
@@ -26,44 +26,42 @@ refinement_policy_config: null
 scheduler:
   hidden_dim: 256
   num_layers: 2
-  # 精炼步数直接对应 DDIM 推理步数 {0, 1, 2, 5}（4-way）
-  refinement_steps: [0, 1, 2, 5]
+  # Binary action space: 0=VAE, 5=full refine. 简化决策。
+  refinement_steps: [0, 5]
   max_refinement_steps: 5
 
-# Stage 4 配置（lightweight_ppo 或 ppo_pegrad）
+# Stage 4 配置
 stage4:
   mode: lightweight_ppo
   reward:
     cost_type: refinement_steps
-    cost_coef_target: 0.05
-    task_only_epochs: 10
-    cost_warmup_epochs: 20
+    cost_coef_target: 0.0   # 先完全不要 cost penalty
+    task_only_epochs: 500    # 全程 task only
+    cost_warmup_epochs: 0
   regularization:
     kl_to_pretrained: false
     kl_coef: 0.05
   guard:
-    enable: false
-    eval_every: 5
-    success_tolerance: 0.05
+    enable: true
+    eval_every: 10
+    success_tolerance: 0.03
     rollback_on_drop: true
 
 pegrad:
   task_weight: 1.0
-  cost_weight: 0.1
-  project_cost_to_task: True
+  cost_weight: 0.0
+  project_cost_to_task: False
   clip_grad_norm: 0.5
 
 ppo:
   clip_epsilon: 0.2
   value_loss_coef: 0.5
-  # 提高探索，防止早期策略塌缩到单一 k
-  entropy_coef: 0.15
+  entropy_coef: 0.02      # 低熵，允许快速收敛
   max_grad_norm: 0.5
-  # 第一阶段先弱化效率惩罚，让策略先学会做对任务
-  efficiency_coef: 0.001
+  efficiency_coef: 0.0    # 不要效率惩罚
   gamma: 0.99
   gae_lambda: 0.95
-  n_epochs: 4
+  n_epochs: 8             # 更多 PPO epoch
   batch_size: 64
 
 optimizer:
@@ -76,15 +74,14 @@ training:
   seed: 42
   debug: False
   resume: False
-  num_epochs: 500
-  # 提高 rollout 数量，降低 PPO 高方差导致的塌缩
-  n_rollouts_per_epoch: 6
+  num_epochs: 200         # 2-way 收敛更快
+  n_rollouts_per_epoch: 6  # 更多样本，降低方差
   eval_every: 10
   checkpoint_every: 50
   tqdm_interval_sec: 1.0
 
 logging:
-  project: ada_bridger_pusht
+  project: ada_bridger_pusht_score
   resume: True
   mode: online
   name: ${now:%Y.%m.%d-%H.%M.%S}_${name}_${task_name}

@@ -33,9 +33,6 @@ from diffusion_policy.model.ada_bridger.ada_scheduler import AdaScheduler
 TASK_CONFIGS = {
     "pusht": {
         "dataset_path": "data/pusht/pusht_cchi_v7_replay.zarr",
-        "obs_dim": 2,
-        "action_dim": 2,
-        "horizon": 16,
         "n_obs_steps": 2,
         "n_action_steps": 8,
         "max_steps": 300,
@@ -43,9 +40,6 @@ TASK_CONFIGS = {
     "can": {
         "dataset_path": "data/robomimic/datasets/can/ph/low_dim_abs.hdf5",
         "obs_keys": ["object", "robot0_eef_pos", "robot0_eef_quat", "robot0_gripper_qpos"],
-        "obs_dim": 23,
-        "action_dim": 10,
-        "horizon": 16,
         "n_obs_steps": 2,
         "n_action_steps": 8,
         "max_steps": 400,
@@ -54,9 +48,6 @@ TASK_CONFIGS = {
     "lift": {
         "dataset_path": "data/robomimic/datasets/lift/ph/low_dim_abs.hdf5",
         "obs_keys": ["object", "robot0_eef_pos", "robot0_eef_quat", "robot0_gripper_qpos"],
-        "obs_dim": 19,
-        "action_dim": 10,
-        "horizon": 16,
         "n_obs_steps": 2,
         "n_action_steps": 8,
         "max_steps": 400,
@@ -65,9 +56,6 @@ TASK_CONFIGS = {
     "square": {
         "dataset_path": "data/robomimic/datasets/square/ph/low_dim_abs.hdf5",
         "obs_keys": ["object", "robot0_eef_pos", "robot0_eef_quat", "robot0_gripper_qpos"],
-        "obs_dim": 23,
-        "action_dim": 10,
-        "horizon": 16,
         "n_obs_steps": 2,
         "n_action_steps": 8,
         "max_steps": 400,
@@ -80,9 +68,6 @@ TASK_CONFIGS = {
             "robot0_eef_pos", "robot0_eef_quat", "robot0_gripper_qpos",
             "robot1_eef_pos", "robot1_eef_quat", "robot1_gripper_qpos",
         ],
-        "obs_dim": 59,
-        "action_dim": 20,
-        "horizon": 16,
         "n_obs_steps": 2,
         "n_action_steps": 8,
         "max_steps": 700,
@@ -91,9 +76,6 @@ TASK_CONFIGS = {
     "tool_hang": {
         "dataset_path": "data/robomimic/datasets/tool_hang/ph/low_dim_abs.hdf5",
         "obs_keys": ["object", "robot0_eef_pos", "robot0_eef_quat", "robot0_gripper_qpos"],
-        "obs_dim": 53,
-        "action_dim": 10,
-        "horizon": 16,
         "n_obs_steps": 2,
         "n_action_steps": 8,
         "max_steps": 700,
@@ -358,17 +340,28 @@ def main():
         scheduler = FixedScheduler(k, rsteps).to(device)
         print(f"  Using fixed scheduler: refinement_steps={k}")
 
+    # 从 source checkpoint 读取模型维度（不能用 TASK_CONFIGS 硬编码，PushT obs_dim=20 不是 2）
+    model_cfg = dict(
+        horizon=src_cfg.policy.horizon,
+        obs_dim=src_cfg.policy.obs_dim,
+        action_dim=src_cfg.policy.action_dim,
+        n_action_steps=src_cfg.policy.n_action_steps,
+        n_obs_steps=src_cfg.policy.n_obs_steps,
+    )
+    # 向 run_episode 补充 env 参数
+    tcfg_full = {**model_cfg, **tcfg}
+
     # 3. 组装 D3RL policy
-    print("\n2. Building D3RL policy...")
+    print(f"\n2. Building D3RL policy (obs_dim={model_cfg['obs_dim']}, action_dim={model_cfg['action_dim']})...")
     d3rl_policy = AdaBridgerPolicy(
         source_policy=source_policy,
         refinement_policy=refine_policy,
         scheduler=scheduler,
-        horizon=tcfg["horizon"],
-        obs_dim=tcfg["obs_dim"],
-        action_dim=tcfg["action_dim"],
-        n_action_steps=tcfg["n_action_steps"],
-        n_obs_steps=tcfg["n_obs_steps"],
+        horizon=model_cfg["horizon"],
+        obs_dim=model_cfg["obs_dim"],
+        action_dim=model_cfg["action_dim"],
+        n_action_steps=model_cfg["n_action_steps"],
+        n_obs_steps=model_cfg["n_obs_steps"],
         refinement_steps=[0, 1, 2, 5],
         max_refinement_steps=5,
         scheduler_deterministic=True,
@@ -392,7 +385,7 @@ def main():
     all_results = []
     for ep in range(args.n_episodes):
         env.seed(42 + ep)
-        r = run_episode(d3rl_policy, env, tcfg, device)
+        r = run_episode(d3rl_policy, env, tcfg_full, device)
         all_results.append(r)
         print(f"  Ep {ep+1}: reward={r['final_reward']:.2f}  "
               f"success={'✓' if r['success'] else '✗'}  "

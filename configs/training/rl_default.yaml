@@ -1,0 +1,10 @@
+# RL (PPO) training config for AdaBridger/D3RL
+device: "cuda:0"
+seed: 42
+debug: false
+resume: false
+num_epochs: 500
+n_rollouts_per_epoch: 6
+eval_every: 10
+checkpoint_every: 50
+tqdm_interval_sec: 1.0

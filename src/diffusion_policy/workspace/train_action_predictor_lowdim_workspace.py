@@ -107,6 +107,7 @@ class TrainActionPredictorLowdimWorkspace(BaseWorkspace):
         assert isinstance(dataset, BaseLowdimDataset)
         
         # 包装数据集以添加prev_action
+        print(f"  [DEBUG] cfg.prev_action_horizon = {cfg.prev_action_horizon}")
         wrapped_dataset = ActionPredictorDatasetWrapper(
             base_dataset=dataset,
             prev_action_horizon=cfg.prev_action_horizon,

@@ -81,9 +81,13 @@ class JsonLogger:
         if last_line_start < last_line_end:
             # has last line of json
             last_line = file.readline()
-            self.last_log = json.loads(last_line)
-        
-        # remove the last incomplete line
+            try:
+                self.last_log = json.loads(last_line)
+            except json.JSONDecodeError:
+                # 上一轮训练被 kill 导致最后一行不完整，丢弃
+                last_line_end = last_line_start
+
+        # remove the last incomplete/corrupted line
         file.seek(last_line_end)
         file.truncate()
     

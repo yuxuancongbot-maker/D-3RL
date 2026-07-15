@@ -312,56 +312,107 @@ class AdaScheduler(nn.Module):
 
 
 class AdaSchedulerForImages(AdaScheduler):
+    """Image/multimodal wrapper for :class:`AdaScheduler`.
+
+    The base scheduler still operates on encoded observation features
+    ``[B, T, Df]``. This wrapper only adapts raw modality observations from image
+    runners, e.g. ``{"image": [B,T,C,H,W], "agent_pos": [B,T,D]}``, through an
+    existing ``MultiImageObsEncoder``.
     """
-    支持图像观测的调度器
-    """
-    
+
     def __init__(
         self,
-        obs_encoder: nn.Module,  # 预训练的图像编码器
-        obs_feature_dim: int,
+        obs_encoder: nn.Module,
         action_dim: int,
         action_horizon: int,
         n_obs_steps: int,
+        obs_feature_dim: int = None,
         hidden_dim: int = 256,
+        num_layers: int = 2,
         refinement_steps: List[int] = None,
-        step_options: List[int] = None,  # 向后兼容
+        step_options: List[int] = None,
         freeze_encoder: bool = True,
+        **kwargs,
     ):
-        # 先调用父类初始化，使用feature_dim作为obs_dim
+        if obs_feature_dim is None:
+            obs_feature_dim = obs_encoder.output_shape()[0]
         super().__init__(
             obs_dim=obs_feature_dim,
             action_dim=action_dim,
             action_horizon=action_horizon,
             n_obs_steps=n_obs_steps,
             hidden_dim=hidden_dim,
+            num_layers=num_layers,
             refinement_steps=refinement_steps,
             step_options=step_options,
         )
-        
-        # 图像编码器
         self.obs_encoder_module = obs_encoder
-        
+        self.normalizer = None
+
         if freeze_encoder:
+            self.obs_encoder_module.eval()
             for param in self.obs_encoder_module.parameters():
                 param.requires_grad = False
-    
+
+    def set_normalizer(self, normalizer):
+        """Attach the policy/dataset normalizer used for raw image observations."""
+        self.normalizer = normalizer
+
     def encode_obs(self, obs_dict: Dict[str, torch.Tensor]) -> torch.Tensor:
-        """
-        编码图像观测
-        """
-        # 这里需要根据具体的obs_encoder实现来调整
-        with torch.no_grad() if not self.training else torch.enable_grad():
-            features = self.obs_encoder_module(obs_dict)
-        return features
-    
+        """Encode modality observations ``[B,T,...]`` to features ``[B,T,Df]``."""
+        if "obs" in obs_dict and isinstance(obs_dict["obs"], dict):
+            obs_dict = obs_dict["obs"]
+        if self.normalizer is not None:
+            params = getattr(self.normalizer, "params_dict", {})
+            if all(key in params for key in obs_dict.keys()):
+                obs_dict = self.normalizer.normalize(obs_dict)
+            else:
+                # Some image source policies normalize encoded obs under an ``obs`` key;
+                # keep raw modality tensors unchanged rather than breaking lowdim/image
+                # mixed checkpoints. Image pixels from wrappers are already in [0, 1].
+                obs_dict = {
+                    key: self.normalizer[key].normalize(value) if key in params else value
+                    for key, value in obs_dict.items()
+                }
+
+        batch_size = None
+        n_steps = None
+        flat = {}
+        for key, value in obs_dict.items():
+            if not isinstance(value, torch.Tensor):
+                continue
+            if value.dim() >= 3:
+                batch_size = value.shape[0]
+                n_steps = min(value.shape[1], self.n_obs_steps)
+                flat[key] = value[:, :n_steps].reshape(batch_size * n_steps, *value.shape[2:])
+            elif value.dim() == 2:
+                batch_size = value.shape[0]
+                n_steps = 1
+                flat[key] = value
+            else:
+                flat[key] = value
+
+        if batch_size is None or n_steps is None:
+            raise ValueError("Image scheduler received no tensor observations to encode.")
+
+        grad_ctx = torch.no_grad() if not any(p.requires_grad for p in self.obs_encoder_module.parameters()) else torch.enable_grad()
+        with grad_ctx:
+            features = self.obs_encoder_module(flat)
+        return features.reshape(batch_size, n_steps, -1)
+
     def forward(
         self,
-        obs_dict: Dict[str, torch.Tensor],
+        obs_dict,
         init_action: torch.Tensor,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
-        """
-        前向传播（图像版本）
-        """
-        obs_features = self.encode_obs(obs_dict)
+        if isinstance(obs_dict, torch.Tensor):
+            obs_features = obs_dict
+        else:
+            obs_features = self.encode_obs(obs_dict)
+        if obs_features.shape[-1] != self.obs_dim:
+            raise ValueError(
+                f"Encoded image obs dim={obs_features.shape[-1]} does not match "
+                f"scheduler.obs_dim={self.obs_dim}. Align the source/refiner encoder "
+                "feature size or set scheduler.obs_feature_dim accordingly."
+            )
         return super().forward(obs_features, init_action)

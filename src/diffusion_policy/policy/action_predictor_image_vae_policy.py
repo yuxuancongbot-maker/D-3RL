@@ -81,7 +81,22 @@ class ActionPredictorImageVAEPolicy(BaseLowdimPolicy):
     def reset(self):
         """重置内部状态（新 episode 开始时调用）"""
         self._prev_action = None
-    
+
+    def load_state_dict(self, state_dict, strict=True):
+        """Load checkpoints after letting the nested VAE detect its architecture.
+
+        Parent-module loading bypasses ``VAEConditionalMLP.load_state_dict`` during
+        recursion, so proactively rebuild the VAE nets for old Dropout checkpoints.
+        """
+        prefix = 'model.net.'
+        net_state = {
+            k[len(prefix):]: v for k, v in state_dict.items()
+            if k.startswith(prefix)
+        }
+        if net_state:
+            self.model.net.load_state_dict(net_state, strict=False)
+        return super().load_state_dict(state_dict, strict=strict)
+
     def _encode_obs_seq(self, obs_dict: Dict[str, torch.Tensor]) -> torch.Tensor:
         """
         编码观测序列
@@ -131,7 +146,13 @@ class ActionPredictorImageVAEPolicy(BaseLowdimPolicy):
             enc = enc.unsqueeze(1)  # (B, 1, D)
         
         return enc
-    
+
+    def encode_obs(self, obs_dict: Dict[str, torch.Tensor]) -> torch.Tensor:
+        """Public encoded-observation interface used by Ada-BRIDGER schedulers."""
+        if 'obs' in obs_dict and isinstance(obs_dict['obs'], dict):
+            obs_dict = obs_dict['obs']
+        return self._encode_obs_seq(obs_dict)
+
     @torch.no_grad()
     def predict_action(
         self, 
@@ -176,8 +197,16 @@ class ActionPredictorImageVAEPolicy(BaseLowdimPolicy):
         if original_temp is not None:
             self.model.temperature = self.temperature
         
-        # VAE 采样
-        action_pred = self.model.sample(cond)  # (B, pred_horizon, action_dim)
+        # VAE 采样；如果上层 Ada-BRIDGER 提供 refined-action feedback，
+        # 则按 VAEModel 的 prev_action 条件接口传入。未提供时保持原行为。
+        prev_action_cond = None
+        if prev_action is not None:
+            if 'action' in self.normalizer.params_dict:
+                prev_action_cond = self.normalizer['action'].normalize(prev_action)
+            else:
+                prev_action_cond = prev_action
+            prev_action_cond = prev_action_cond.reshape(B, -1)
+        action_pred = self.model.sample(cond, prev_action=prev_action_cond)  # (B, pred_horizon, action_dim)
         
         # 恢复温度
         if original_temp is not None:
@@ -201,6 +230,7 @@ class ActionPredictorImageVAEPolicy(BaseLowdimPolicy):
             'action': action,
             'action_pred': action_pred_unnorm,
             'action_pred_normalized': action_pred,
+            'obs_feat': obs_feat,
         }
     
     def set_normalizer(self, normalizer: LinearNormalizer):

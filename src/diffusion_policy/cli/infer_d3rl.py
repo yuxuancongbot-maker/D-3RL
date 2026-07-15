@@ -25,7 +25,8 @@ import dill, hydra, numpy as np, torch
 from omegaconf import OmegaConf
 
 from diffusion_policy.policy.ada_bridger_policy import AdaBridgerPolicy
-from diffusion_policy.model.ada_bridger.ada_scheduler import AdaScheduler
+from diffusion_policy.model.ada_bridger.ada_scheduler import AdaScheduler, AdaSchedulerForImages
+from diffusion_policy.common.pytorch_util import dict_apply
 
 # ────────────────────────────────────────────────────────────────
 # Task registry: known task parameters for env creation
@@ -97,7 +98,8 @@ def load_policy(ckpt_path: str, device: str = "cuda:0"):
     looks_like_vae = any("net.encoder_net" in k for k in state_dict.keys())
 
     OmegaConf.set_struct(cfg.policy, False)
-    if looks_like_vae:
+    policy_target = str(cfg.policy.get('_target_', ''))
+    if looks_like_vae and 'action_predictor_image_vae_policy' not in policy_target:
         cfg.policy.backend = "vae"
         cfg.policy.model = {
             "_target_": "diffusion_policy.model.action_predictor.vae_action_predictor.VAEModel",
@@ -199,10 +201,42 @@ def create_env(task: str):
     return env, tcfg
 
 
+def create_image_env(task: str, shape_meta: dict, dataset_path: str = None):
+    """Create a single image-observation env using existing image wrappers."""
+    if task in {"pusht", "pusht_image"}:
+        from diffusion_policy.env.pusht.pusht_image_env import PushTImageEnv
+        from diffusion_policy.gym_util.multistep_wrapper import MultiStepWrapper
+        env = MultiStepWrapper(PushTImageEnv(render_size=96), n_obs_steps=2, n_action_steps=8,
+                               max_episode_steps=300)
+        return env, {"n_obs_steps": 2, "n_action_steps": 8, "max_steps": 300}
+
+    base_task = task[:-6] if task.endswith("_image") else task
+    if dataset_path is None:
+        dataset_path = f"data/robomimic/datasets/{base_task}/ph/image.hdf5"
+    import robomimic.utils.file_utils as FileUtils
+    import robomimic.utils.env_utils as EnvUtils
+    import robomimic.utils.obs_utils as ObsUtils
+    from diffusion_policy.env.robomimic.robomimic_image_wrapper import RobomimicImageWrapper
+    from diffusion_policy.gym_util.multistep_wrapper import MultiStepWrapper
+    modality_mapping = {}
+    for key, attr in shape_meta['obs'].items():
+        modality_mapping.setdefault(attr.get('type', 'low_dim'), []).append(key)
+    ObsUtils.initialize_obs_modality_mapping_from_dict(modality_mapping)
+    env_meta = FileUtils.get_env_metadata_from_dataset(os.path.expanduser(dataset_path))
+    robomimic_env = EnvUtils.create_env_from_metadata(
+        env_meta=env_meta, render=False, render_offscreen=False, use_image_obs=True)
+    env = MultiStepWrapper(
+        RobomimicImageWrapper(robomimic_env, shape_meta=shape_meta),
+        n_obs_steps=2, n_action_steps=8,
+        max_episode_steps=700 if base_task in {"transport", "tool_hang"} else 400)
+    return env, {"n_obs_steps": 2, "n_action_steps": 8,
+                 "max_steps": 700 if base_task in {"transport", "tool_hang"} else 400}
+
+
 # ────────────────────────────────────────────────────────────────
 # Inference loop
 # ────────────────────────────────────────────────────────────────
-def run_episode(policy, env, tcfg: dict, device: str = "cuda:0"):
+def run_episode(policy, env, tcfg: dict, device: str = "cuda:0", obs_mode: str = "lowdim"):
     """运行一个 episode，返回统计。"""
     policy.reset()
     obs = env.reset()
@@ -222,11 +256,17 @@ def run_episode(policy, env, tcfg: dict, device: str = "cuda:0"):
         e_end = torch.cuda.Event(enable_timing=True)
 
     while not done:
-        # 准备 obs: PushT 需要去掉 visibility mask，robomimic 直接用
-        raw_obs = obs[np.newaxis].astype(np.float32)
-        if not is_robomimic and raw_obs.shape[-1] == obs_dim * 2:
-            raw_obs = raw_obs[..., :obs_dim]  # PushT: 去掉 mask
-        obs_dict = {"obs": torch.from_numpy(raw_obs[:, :n_obs_steps]).to(device)}
+        if obs_mode == "image":
+            obs_dict = dict_apply(
+                {k: v[np.newaxis, :n_obs_steps].astype(np.float32) for k, v in obs.items()},
+                lambda x: torch.from_numpy(x).to(device),
+            )
+        else:
+            # 准备 obs: PushT 需要去掉 visibility mask，robomimic 直接用
+            raw_obs = obs[np.newaxis].astype(np.float32)
+            if not is_robomimic and raw_obs.shape[-1] == obs_dim * 2:
+                raw_obs = raw_obs[..., :obs_dim]  # PushT: 去掉 mask
+            obs_dict = {"obs": torch.from_numpy(raw_obs[:, :n_obs_steps]).to(device)}
 
         if use_cuda:
             e_start.record()
@@ -294,11 +334,16 @@ def _undo_transform_action(action, rotation_transformer):
 def main():
     parser = argparse.ArgumentParser(description="D3RL inference")
     parser.add_argument("--task", default="pusht",
-                        choices=["pusht", "can", "lift", "square", "transport", "tool_hang"])
+                        choices=["pusht", "can", "lift", "square", "transport", "tool_hang",
+                                 "pusht_image", "can_image", "lift_image", "square_image",
+                                 "transport_image", "tool_hang_image"])
     parser.add_argument("--source", required=True, help="VAE source policy checkpoint")
     parser.add_argument("--refiner", required=True, help="Diffusion refiner checkpoint")
     parser.add_argument("--scheduler", default=None, help="Stage 3 scheduler checkpoint (可选)")
     parser.add_argument("--device", default="cuda:0")
+    parser.add_argument("--obs-mode", default="auto", choices=["auto", "lowdim", "image"])
+    parser.add_argument("--image-dataset", default=None,
+                        help="Robomimic image dataset path override for *_image tasks")
     parser.add_argument("--n-episodes", type=int, default=5)
     parser.add_argument("--refinement-steps", type=int, default=None,
                         help="固定 DDIM 步数 (0=只用 VAE，跳过 scheduler)")
@@ -306,7 +351,11 @@ def main():
 
     device = args.device
     task = args.task
-    tcfg = TASK_CONFIGS[task]
+    obs_mode = args.obs_mode
+    if obs_mode == "auto":
+        obs_mode = "image" if task.endswith("_image") else "lowdim"
+    base_task = task[:-6] if task.endswith("_image") else task
+    tcfg = TASK_CONFIGS.get(base_task, {})
 
     # 1. 加载模型
     print("=" * 60)
@@ -318,7 +367,27 @@ def main():
 
     # 2. Scheduler
     if args.scheduler:
-        scheduler = load_scheduler(args.scheduler, device)
+        if obs_mode == "image":
+            data = torch.load(args.scheduler, map_location=device)
+            scfg = data.get("config", {})
+            rsteps = scfg.get("refinement_steps") or scfg.get("step_options") or [0, 1, 2, 5]
+            obs_feature_dim = scfg.get("obs_dim", None) or scfg.get("obs_feature_dim", None)
+            if obs_feature_dim is None:
+                obs_feature_dim = refine_policy.obs_encoder.output_shape()[0]
+                print(f"  Inferred image scheduler obs_feature_dim={obs_feature_dim} from refiner encoder")
+            scheduler = AdaSchedulerForImages(
+                obs_encoder=copy.deepcopy(refine_policy.obs_encoder),
+                obs_feature_dim=obs_feature_dim,
+                action_dim=scfg.get("action_dim", ref_cfg.policy.action_dim),
+                action_horizon=scfg.get("horizon", ref_cfg.policy.horizon),
+                n_obs_steps=scfg.get("n_obs_steps", ref_cfg.policy.n_obs_steps),
+                refinement_steps=rsteps,
+                freeze_encoder=True,
+            ).to(device)
+            scheduler.load_state_dict(data["scheduler_state_dict"], strict=False)
+            scheduler.eval()
+        else:
+            scheduler = load_scheduler(args.scheduler, device)
     else:
         k = args.refinement_steps if args.refinement_steps is not None else 5
         rsteps = [0, 1, 2, 5]
@@ -341,12 +410,13 @@ def main():
         print(f"  Using fixed scheduler: refinement_steps={k}")
 
     # 从 source checkpoint 读取模型维度（不能用 TASK_CONFIGS 硬编码，PushT obs_dim=20 不是 2）
+    policy_model = getattr(source_policy, 'model', source_policy)
     model_cfg = dict(
-        horizon=src_cfg.policy.horizon,
-        obs_dim=src_cfg.policy.obs_dim,
-        action_dim=src_cfg.policy.action_dim,
-        n_action_steps=src_cfg.policy.n_action_steps,
-        n_obs_steps=src_cfg.policy.n_obs_steps,
+        horizon=getattr(source_policy, 'horizon', src_cfg.policy.horizon),
+        obs_dim=src_cfg.policy.get('obs_dim', 0),
+        action_dim=src_cfg.policy.get('action_dim', getattr(policy_model, 'action_dim')),
+        n_action_steps=getattr(source_policy, 'n_action_steps', src_cfg.policy.n_action_steps),
+        n_obs_steps=getattr(source_policy, 'n_obs_steps', src_cfg.policy.n_obs_steps),
     )
     # 向 run_episode 补充 env 参数
     tcfg_full = {**model_cfg, **tcfg}
@@ -381,11 +451,20 @@ def main():
 
     # 4. 推理
     print(f"\n3. Running {args.n_episodes} episodes...")
-    env, _ = create_env(task)
+    if obs_mode == "image":
+        shape_meta = ref_cfg.get('shape_meta', None)
+        if shape_meta is None and 'task' in ref_cfg:
+            shape_meta = ref_cfg.task.get('shape_meta', None)
+        if shape_meta is None:
+            raise ValueError("Image inference requires shape_meta in the refiner checkpoint config.")
+        env, image_tcfg = create_image_env(task, shape_meta, dataset_path=args.image_dataset)
+        tcfg_full.update(image_tcfg)
+    else:
+        env, _ = create_env(base_task)
     all_results = []
     for ep in range(args.n_episodes):
         env.seed(42 + ep)
-        r = run_episode(d3rl_policy, env, tcfg_full, device)
+        r = run_episode(d3rl_policy, env, tcfg_full, device, obs_mode=obs_mode)
         all_results.append(r)
         print(f"  Ep {ep+1}: reward={r['final_reward']:.2f}  "
               f"success={'✓' if r['success'] else '✗'}  "

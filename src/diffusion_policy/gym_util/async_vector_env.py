@@ -567,12 +567,23 @@ def _worker(index, env_fn, pipe, parent_pipe, shared_memory, error_queue):
         while True:
             command, data = pipe.recv()
             if command == "reset":
-                observation = env.reset()
+                try:
+                    observation = env.reset()
+                except Exception:
+                    # reset 也崩 → 重建整个 env
+                    env = env_fn()
+                    observation = env.reset()
                 pipe.send((observation, True))
             elif command == "step":
-                observation, reward, done, info = env.step(data)
-                # if done:
-                #     observation = env.reset()
+                try:
+                    observation, reward, done, info = env.step(data)
+                except Exception:
+                    # MuJoCo 物理崩溃 → 重建整个 env（不是仅 reset）
+                    env = env_fn()
+                    observation = env.reset()
+                    reward = 0.0
+                    done = True
+                    info = {'error': 'MuJoCo crashed, env rebuilt'}
                 pipe.send(((observation, reward, done, info), True))
             elif command == "seed":
                 env.seed(data)
@@ -589,7 +600,10 @@ def _worker(index, env_fn, pipe, parent_pipe, shared_memory, error_queue):
                     )
                 function = getattr(env, name)
                 if callable(function):
-                    pipe.send((function(*args, **kwargs), True))
+                    try:
+                        pipe.send((function(*args, **kwargs), True))
+                    except Exception:
+                        pipe.send((None, True))
                 else:
                     pipe.send((function, True))
             elif command == "_setattr":

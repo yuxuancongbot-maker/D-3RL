@@ -59,10 +59,18 @@ class ActionPredictorImagePolicy(BaseLowdimPolicy):
         enc = enc.reshape(B, T, D)
         return self.obs_proj(enc)
 
+    def encode_obs(self, obs_dict: Dict[str, torch.Tensor]) -> torch.Tensor:
+        """Public encoded-observation interface used by Ada-BRIDGER schedulers."""
+        if 'obs' in obs_dict and isinstance(obs_dict['obs'], dict):
+            obs_dict = obs_dict['obs']
+        return self._encode_obs_seq(obs_dict)
+
     @torch.no_grad()
     def predict_action(self, obs_dict: Dict[str, torch.Tensor], prev_action: torch.Tensor = None):
-        assert 'obs' in obs_dict
-        obs_raw = obs_dict['obs']  # dict of modalities
+        if 'obs' in obs_dict and isinstance(obs_dict['obs'], dict):
+            obs_raw = obs_dict['obs']  # dict of modalities
+        else:
+            obs_raw = obs_dict
         # 编码观测
         obs_feat = self._encode_obs_seq(obs_raw)
         
@@ -98,7 +106,8 @@ class ActionPredictorImagePolicy(BaseLowdimPolicy):
         return {
             'action': action,
             'action_pred': action_pred,
-            'action_pred_normalized': naction_pred
+            'action_pred_normalized': naction_pred,
+            'obs_feat': nobs,
         }
 
     def predict_action_with_condition(self, obs_dict: Dict[str, torch.Tensor], condition_action: torch.Tensor):

@@ -18,6 +18,12 @@ import torch.nn as nn
 import numpy as np
 
 from diffusion_policy.model.common.normalizer import LinearNormalizer
+from diffusion_policy.common.obs_utils import (
+    index_obs_batch,
+    is_modality_obs,
+    slice_obs_steps,
+    unwrap_obs,
+)
 
 
 class AdaBridgerPolicy(nn.Module):
@@ -111,6 +117,8 @@ class AdaBridgerPolicy(nn.Module):
     def set_normalizer(self, normalizer: LinearNormalizer):
         """设置 normalizer（就地更新，保持模块注册不变）"""
         self._normalizer.load_state_dict(normalizer.state_dict())
+        if hasattr(self.scheduler, 'set_normalizer'):
+            self.scheduler.set_normalizer(normalizer)
 
     def state_dict(self, *args, **kwargs):
         """覆盖 state_dict：排除 _normalizer（运行时由 source policy 提供）"""
@@ -168,6 +176,52 @@ class AdaBridgerPolicy(nn.Module):
         # BRIDGER feedback: 保存上一步 refined action 供下一步 VAE 使用
         self._last_refined_action = None
 
+    def _is_image_obs(self, obs_dict: Dict[str, torch.Tensor]) -> bool:
+        return is_modality_obs(obs_dict) or (
+            'obs' not in obs_dict and isinstance(unwrap_obs(obs_dict), dict)
+        )
+
+    def _get_scheduler_obs(self, obs_dict: Dict[str, torch.Tensor], source_result=None):
+        """Return the observation container expected by the scheduler.
+
+        Lowdim schedulers keep receiving ``Tensor[B, To, Do]`` exactly as before.
+        Image source policies may expose encoded features as ``obs_feat``; reuse
+        them only when the feature dimension exactly matches ``scheduler.obs_dim``.
+        Otherwise, raw image modalities are allowed to fall back only to a
+        scheduler that exposes ``encode_obs`` (``AdaSchedulerForImages``).
+        """
+        expected_dim = getattr(self.scheduler, 'obs_dim', None)
+        if source_result is not None and 'obs_feat' in source_result:
+            obs_feat = source_result['obs_feat'][:, :self.n_obs_steps]
+            if expected_dim is None or obs_feat.shape[-1] == expected_dim:
+                return obs_feat
+            if not self._is_image_obs(obs_dict):
+                raise ValueError(
+                    f"Scheduler obs_dim={expected_dim} but source obs_feat dim="
+                    f"{obs_feat.shape[-1]} for non-image observations."
+                )
+
+        if 'obs' in obs_dict and isinstance(obs_dict['obs'], torch.Tensor):
+            obs = obs_dict['obs'][:, :self.n_obs_steps]
+            if expected_dim is not None and obs.shape[-1] != expected_dim:
+                raise ValueError(
+                    f"Scheduler obs_dim={expected_dim} but lowdim obs dim={obs.shape[-1]}."
+                )
+            return obs
+
+        obs = slice_obs_steps(unwrap_obs(obs_dict), self.n_obs_steps)
+        if not hasattr(self.scheduler, 'encode_obs'):
+            got = None
+            if source_result is not None and 'obs_feat' in source_result:
+                got = int(source_result['obs_feat'].shape[-1])
+            raise ValueError(
+                "Image observations require either source obs_feat with dim matching "
+                f"scheduler.obs_dim={expected_dim}, or an image-capable scheduler "
+                "with encode_obs(). "
+                f"Got source obs_feat dim={got}."
+            )
+        return obs
+
     # ------------------------------------------------------------------
     # Core Inference
     # ------------------------------------------------------------------
@@ -204,8 +258,17 @@ class AdaBridgerPolicy(nn.Module):
             pa_horizon = getattr(self.source_policy, 'prev_action_horizon', self.horizon)
             prev_action = prev_action[:, :pa_horizon]
         with torch.no_grad():
-            source_result = self.source_policy.predict_action(
-                obs_dict, prev_action=prev_action)
+            source_obs_dict = obs_dict
+            if self._is_image_obs(obs_dict) and 'obs' not in obs_dict:
+                # Image source policies in this repo accept either top-level
+                # modalities (VAE) or {'obs': modalities} (Transformer).
+                source_obs_dict = {'obs': obs_dict}
+            try:
+                source_result = self.source_policy.predict_action(
+                    source_obs_dict, prev_action=prev_action)
+            except AssertionError:
+                source_result = self.source_policy.predict_action(
+                    obs_dict, prev_action=prev_action)
         init_action = source_result['action_pred']  # [B, horizon, action_dim]
 
         if use_cuda_timing:
@@ -214,9 +277,9 @@ class AdaBridgerPolicy(nn.Module):
             t_source = time.perf_counter()
 
         # 2) Scheduler 决策
-        obs = obs_dict['obs']  # [B, T_obs, obs_dim]
+        scheduler_obs = self._get_scheduler_obs(obs_dict, source_result)
         steps, action_idx, log_prob, value = self.scheduler.select_action(
-            obs[:, :self.n_obs_steps],
+            scheduler_obs,
             init_action,
             deterministic=self.scheduler_deterministic,
         )
@@ -240,7 +303,7 @@ class AdaBridgerPolicy(nn.Module):
                 if not torch.any(batch_mask):
                     continue
                 idx = torch.nonzero(batch_mask, as_tuple=False).squeeze(-1)
-                sub_obs_dict = {key: value.index_select(0, idx) for key, value in obs_dict.items()}
+                sub_obs_dict = index_obs_batch(obs_dict, idx)
                 sub_init_action = init_action.index_select(0, idx)
                 sub_refined = self._sdedit_refine(sub_obs_dict, sub_init_action, k)
                 refined_action.index_copy_(0, idx, sub_refined)
@@ -292,6 +355,87 @@ class AdaBridgerPolicy(nn.Module):
 
         return result
 
+    def _sdedit_refine_image(
+        self,
+        obs_dict: Dict[str, torch.Tensor],
+        init_action: torch.Tensor,
+        k: int,
+    ) -> torch.Tensor:
+        """DDIM warm-start refinement for image/multimodal diffusion policies."""
+        refine_policy = self.refinement_policy
+        noise_scheduler = refine_policy.noise_scheduler
+        model = refine_policy.model
+        normalizer = refine_policy.normalizer
+
+        B = init_action.shape[0]
+        device = init_action.device
+        dtype = init_action.dtype
+        Da = self.action_dim
+        To = self.n_obs_steps
+        T = self.horizon
+
+        raw_obs = unwrap_obs(obs_dict)
+        params = getattr(normalizer, 'params_dict', {})
+        if all(key in params for key in raw_obs.keys()):
+            nobs = normalizer.normalize(raw_obs)
+        else:
+            nobs = {
+                key: normalizer[key].normalize(value) if key in params else value
+                for key, value in raw_obs.items()
+            }
+        naction_init = normalizer['action'].normalize(init_action)
+
+        use_global_cond = getattr(refine_policy, 'obs_as_global_cond', True)
+        local_cond = None
+        global_cond = None
+
+        if use_global_cond:
+            this_nobs = {
+                key: value[:, :To].reshape(-1, *value.shape[2:])
+                for key, value in nobs.items()
+            }
+            nobs_features = refine_policy.obs_encoder(this_nobs)
+            global_cond = nobs_features.reshape(B, -1)
+            trajectory_init = naction_init
+            condition_data = trajectory_init.clone()
+            condition_mask = torch.zeros_like(trajectory_init, dtype=torch.bool)
+        else:
+            this_nobs = {
+                key: value.reshape(-1, *value.shape[2:])
+                for key, value in nobs.items()
+            }
+            nobs_features = refine_policy.obs_encoder(this_nobs).reshape(B, T, -1)
+            trajectory_init = torch.cat([naction_init, nobs_features], dim=-1)
+            condition_data = trajectory_init.clone()
+            condition_mask = torch.zeros_like(trajectory_init, dtype=torch.bool)
+            condition_mask[:, :To, Da:] = True
+
+        num_inference_steps = int(k)
+        if num_inference_steps <= 0:
+            return init_action
+
+        ddim_scheduler = self._get_ddim_scheduler(noise_scheduler)
+        ddim_scheduler.set_timesteps(num_inference_steps)
+
+        noise = torch.randn_like(trajectory_init, dtype=dtype, device=device)
+        start_timestep = ddim_scheduler.timesteps[0].item()
+        start_timestep_tensor = torch.tensor([start_timestep], device=device).expand(B)
+        trajectory = ddim_scheduler.add_noise(trajectory_init, noise, start_timestep_tensor)
+
+        for t in ddim_scheduler.timesteps:
+            trajectory[condition_mask] = condition_data[condition_mask]
+            model_output = model(
+                trajectory,
+                t,
+                local_cond=local_cond,
+                global_cond=global_cond,
+            )
+            trajectory = ddim_scheduler.step(model_output, t, trajectory).prev_sample
+
+        trajectory[condition_mask] = condition_data[condition_mask]
+        naction_refined = trajectory[..., :Da]
+        return normalizer['action'].unnormalize(naction_refined)
+
     # ------------------------------------------------------------------
     # SDEdit Refinement
     # ------------------------------------------------------------------
@@ -308,6 +452,9 @@ class AdaBridgerPolicy(nn.Module):
         直接用 SI ODE 正向积分。否则回退到 DDIM warm-start。
         """
         refine_policy = self.refinement_policy
+
+        if refine_policy is not None and hasattr(refine_policy, 'obs_encoder') and self._is_image_obs(obs_dict):
+            return self._sdedit_refine_image(obs_dict, init_action, k)
 
         # ── SI refiner fast-path ──────────────────────────────────
         if hasattr(refine_policy, 'sample'):
@@ -343,6 +490,11 @@ class AdaBridgerPolicy(nn.Module):
         # 归一化
         naction_init = normalizer['action'].normalize(init_action)  # [B, T, Da]
 
+        if 'obs' not in obs_dict or not isinstance(obs_dict['obs'], torch.Tensor):
+            raise TypeError(
+                "Lowdim DDIM warm-start expects obs_dict['obs'] to be a Tensor. "
+                "For image observations, use a refiner policy with obs_encoder."
+            )
         obs = obs_dict['obs']
         nobs = normalizer['obs'].normalize(obs)  # [B, To, Do]
 

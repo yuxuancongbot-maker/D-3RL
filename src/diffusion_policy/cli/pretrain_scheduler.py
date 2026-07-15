@@ -36,20 +36,33 @@ from diffusion_policy.model.ada_bridger.ada_scheduler import AdaScheduler
 
 
 class OracleDataset(Dataset):
-    """Oracle 标签数据集"""
-    
-    def __init__(self, samples):
+    """Oracle 标签数据集，兼容旧 samples 列表和新 tensor 字典格式。"""
+
+    def __init__(self, samples=None, data=None, indices=None):
         self.samples = samples
-        
+        self.data = data
+        self.indices = indices
+
     def __len__(self):
-        return len(self.samples)
-    
+        if self.samples is not None:
+            return len(self.samples)
+        return len(self.indices)
+
     def __getitem__(self, idx):
-        sample = self.samples[idx]
+        if self.samples is not None:
+            sample = self.samples[idx]
+            init_action = sample.get('init_action', sample.get('a_init'))
+            return {
+                'obs': sample['obs'].float() if isinstance(sample['obs'], torch.Tensor) else torch.as_tensor(sample['obs']).float(),
+                'init_action': init_action.float() if isinstance(init_action, torch.Tensor) else torch.as_tensor(init_action).float(),
+                'label': torch.tensor(sample['label'], dtype=torch.long),
+            }
+        real_idx = int(self.indices[idx])
+        init_key = 'init_action' if 'init_action' in self.data else 'a_init'
         return {
-            'obs': sample['obs'],
-            'init_action': sample['init_action'],
-            'label': torch.tensor(sample['label'], dtype=torch.long),
+            'obs': self.data['obs'][real_idx].float(),
+            'init_action': self.data[init_key][real_idx].float(),
+            'label': self.data['label'][real_idx].long(),
         }
 
 
@@ -59,13 +72,14 @@ def load_policy_config(ckpt_path: str):
     return payload['cfg']
 
 
-def create_scheduler(cfg, device):
+def create_scheduler(cfg, device, obs_dim=None, action_dim=None, horizon=None, n_obs_steps=None):
     """创建 Scheduler"""
+    policy_cfg = cfg.policy if cfg is not None and 'policy' in cfg else cfg
     scheduler = AdaScheduler(
-        obs_dim=cfg.policy.obs_dim,
-        action_dim=cfg.policy.action_dim,
-        action_horizon=cfg.policy.horizon,
-        n_obs_steps=cfg.policy.n_obs_steps,
+        obs_dim=obs_dim or policy_cfg.obs_dim,
+        action_dim=action_dim or policy_cfg.action_dim,
+        action_horizon=horizon or policy_cfg.horizon,
+        n_obs_steps=n_obs_steps or policy_cfg.n_obs_steps,
         hidden_dim=256,
         num_layers=2,
         refinement_steps=[0, 1, 2, 5],
@@ -171,6 +185,17 @@ def main():
     parser.add_argument('--device', type=str, default='cuda:0')
     parser.add_argument('--val_split', type=float, default=0.1,
                         help='验证集比例')
+    parser.add_argument('--obs_dim', type=int, default=None,
+                        help='Scheduler obs feature dim; inferred from tensor oracle obs when omitted')
+    parser.add_argument('--action_dim', type=int, default=None,
+                        help='Action dim; inferred from oracle init_action when omitted')
+    parser.add_argument('--horizon', type=int, default=None,
+                        help='Action horizon; inferred from oracle init_action when omitted')
+    parser.add_argument('--n_obs_steps', type=int, default=None,
+                        help='Observation steps; inferred from oracle obs when omitted')
+    parser.add_argument('--obs_mode', type=str, default='lowdim',
+                        choices=['lowdim', 'image_feature'],
+                        help='Metadata marker saved in scheduler checkpoint')
     args = parser.parse_args()
     
     device = args.device
@@ -179,23 +204,41 @@ def main():
     # 加载 Oracle 数据
     print(f"加载 Oracle 数据: {args.oracle_data}")
     data = torch.load(args.oracle_data)
-    samples = data['samples']
-    print(f"样本数量: {len(samples)}")
-    
+    if 'samples' in data:
+        samples = data['samples']
+        n_total = len(samples)
+        tensor_data = None
+        print(f"样本数量: {n_total} (samples 格式)")
+    else:
+        required = {'obs', 'label'}
+        init_key = 'init_action' if 'init_action' in data else 'a_init'
+        required.add(init_key)
+        missing = required - set(data.keys())
+        if missing:
+            raise KeyError(f"Oracle tensor data missing keys: {sorted(missing)}")
+        samples = None
+        tensor_data = data
+        n_total = len(data['label'])
+        print(f"样本数量: {n_total} (tensor 格式)")
+
     # 分割训练/验证集
-    n_val = int(len(samples) * args.val_split)
-    n_train = len(samples) - n_val
-    
+    n_val = int(n_total * args.val_split)
+    n_train = n_total - n_val
+
     # 随机打乱
-    indices = np.random.permutation(len(samples))
-    train_samples = [samples[i] for i in indices[:n_train]]
-    val_samples = [samples[i] for i in indices[n_train:]]
-    
+    indices = np.random.permutation(n_total)
+
     print(f"训练集: {n_train}, 验证集: {n_val}")
-    
+
     # 创建数据集和加载器
-    train_dataset = OracleDataset(train_samples)
-    val_dataset = OracleDataset(val_samples)
+    if samples is not None:
+        train_samples = [samples[i] for i in indices[:n_train]]
+        val_samples = [samples[i] for i in indices[n_train:]]
+        train_dataset = OracleDataset(samples=train_samples)
+        val_dataset = OracleDataset(samples=val_samples)
+    else:
+        train_dataset = OracleDataset(data=tensor_data, indices=indices[:n_train])
+        val_dataset = OracleDataset(data=tensor_data, indices=indices[n_train:])
     
     train_loader = DataLoader(
         train_dataset,
@@ -213,7 +256,18 @@ def main():
     # 加载配置并创建 Scheduler
     print("创建 Scheduler...")
     cfg = load_policy_config(args.refine_ckpt)
-    scheduler = create_scheduler(cfg, device)
+    sample0 = train_dataset[0]
+    obs_dim = args.obs_dim or int(sample0['obs'].shape[-1])
+    n_obs_steps = args.n_obs_steps or int(sample0['obs'].shape[0])
+    horizon = args.horizon or int(sample0['init_action'].shape[0])
+    action_dim = args.action_dim or int(sample0['init_action'].shape[-1])
+    scheduler = create_scheduler(
+        cfg, device,
+        obs_dim=obs_dim,
+        action_dim=action_dim,
+        horizon=horizon,
+        n_obs_steps=n_obs_steps,
+    )
     
     # 重置初始偏置（移除原来的偏向 k=0 的设置）
     with torch.no_grad():
@@ -287,10 +341,11 @@ def main():
                 'epoch': epoch,
                 'val_acc': val_acc,
                 'config': {
-                    'obs_dim': cfg.policy.obs_dim,
-                    'action_dim': cfg.policy.action_dim,
-                    'horizon': cfg.policy.horizon,
-                    'n_obs_steps': cfg.policy.n_obs_steps,
+                    'obs_dim': obs_dim,
+                    'action_dim': action_dim,
+                    'horizon': horizon,
+                    'n_obs_steps': n_obs_steps,
+                    'obs_mode': args.obs_mode,
                     'refinement_steps': [0, 1, 2, 5],
                 }
             }, os.path.join(args.output_dir, 'scheduler_best.pt'))
@@ -303,11 +358,12 @@ def main():
         'epoch': args.epochs,
         'val_acc': val_acc,
         'config': {
-            'obs_dim': cfg.policy.obs_dim,
-            'action_dim': cfg.policy.action_dim,
-            'horizon': cfg.policy.horizon,
-            'n_obs_steps': cfg.policy.n_obs_steps,
-'refinement_steps': [0, 1, 2, 5],
+            'obs_dim': obs_dim,
+            'action_dim': action_dim,
+            'horizon': horizon,
+            'n_obs_steps': n_obs_steps,
+            'obs_mode': args.obs_mode,
+            'refinement_steps': [0, 1, 2, 5],
         }
     }, os.path.join(args.output_dir, 'scheduler_final.pt'))
     

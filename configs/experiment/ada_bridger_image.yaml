@@ -1,0 +1,119 @@
+# Ada-BRIDGER image-observation Stage 4 config.
+# Use with task=pusht_image / can_image / lift_image / square_image / transport_image / tool_hang_image.
+
+name: train_ada_bridger_image
+_target_: diffusion_policy.workspace.train_ada_bridger_workspace.TrainAdaBridgerWorkspace
+
+shape_meta: ${task.shape_meta}
+obs_dim: 0
+action_dim: ${task.shape_meta.action.shape[0]}
+task_name: ${task.name}
+exp_name: "ada_bridger_image"
+
+horizon: 16
+n_obs_steps: 2
+n_action_steps: 8
+n_latency_steps: 0
+past_action_visible: false
+keypoint_visible_rate: 1.0
+
+dataset_obs_steps: ${n_obs_steps}
+
+# Set these to image source/refiner checkpoints for the selected task.
+source_policy_checkpoint: null
+source_policy_config: null
+refinement_policy_checkpoint: null
+refinement_policy_config: null
+
+scheduler:
+  _target_: diffusion_policy.model.ada_bridger.ada_scheduler.AdaSchedulerForImages
+  obs_feature_dim: null
+  hidden_dim: 256
+  num_layers: 2
+  refinement_steps: [0, 1, 2, 5]
+  max_refinement_steps: 5
+  freeze_encoder: true
+  pretrain_checkpoint: null
+  obs_encoder:
+    _target_: diffusion_policy.model.vision.multi_image_obs_encoder.MultiImageObsEncoder
+    shape_meta: ${task.shape_meta}
+    rgb_model:
+      _target_: diffusion_policy.model.vision.model_getter.get_resnet
+      name: resnet18
+      weights: null
+    resize_shape: null
+    crop_shape: [76, 76]
+    random_crop: false
+    use_group_norm: true
+    share_rgb_model: false
+    imagenet_norm: true
+
+stage4:
+  mode: lightweight_ppo
+  reward:
+    cost_type: refinement_steps
+    cost_coef_target: 0.05
+    task_only_epochs: 10
+    cost_warmup_epochs: 20
+  regularization:
+    kl_to_pretrained: false
+    kl_coef: 0.05
+  guard:
+    enable: false
+    eval_every: 5
+    success_tolerance: 0.05
+    rollback_on_drop: true
+
+pegrad:
+  task_weight: 1.0
+  cost_weight: 0.1
+  project_cost_to_task: true
+  clip_grad_norm: 0.5
+
+ppo:
+  clip_epsilon: 0.2
+  value_loss_coef: 0.5
+  entropy_coef: 0.10
+  max_grad_norm: 0.5
+  efficiency_coef: 0.0005
+  gamma: 0.99
+  gae_lambda: 0.95
+  n_epochs: 4
+  batch_size: 32
+
+optimizer:
+  lr: 3.0e-4
+  betas: [0.9, 0.999]
+  eps: 1.0e-8
+
+training:
+  device: "cuda:0"
+  seed: 42
+  debug: false
+  resume: false
+  num_epochs: 500
+  n_rollouts_per_epoch: 4
+  eval_every: 10
+  checkpoint_every: 10
+  tqdm_interval_sec: 1.0
+
+logging:
+  project: ada_bridger_image
+  resume: true
+  mode: online
+  name: ${now:%Y.%m.%d-%H.%M.%S}_${name}_${task_name}
+  tags: ["${name}", "${task_name}", "${exp_name}"]
+  id: null
+  group: null
+
+checkpoint:
+  topk:
+    monitor_key: test_mean_score
+    mode: max
+    k: 5
+    format_str: 'epoch={epoch:04d}-test_mean_score={test_mean_score:.3f}.ckpt'
+  save_last_ckpt: true
+  save_last_snapshot: false
+
+multi_run:
+  run_dir: data/outputs/${now:%Y.%m.%d}/${now:%H.%M.%S}_${name}_${task_name}

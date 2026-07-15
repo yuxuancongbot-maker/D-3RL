@@ -10,8 +10,8 @@ name: ${experiment.name}_${task.name}
 _target_: ${experiment._target_}
 
 # Root-level compatibility fields expected by legacy workspaces.
-obs_dim: ${oc.select:experiment.obs_dim,${task.obs_dim}}
-action_dim: ${oc.select:experiment.action_dim,${task.action_dim}}
+obs_dim: ${oc.select:experiment.obs_dim,${oc.select:task.obs_dim,0}}
+action_dim: ${oc.select:experiment.action_dim,${oc.select:task.action_dim,0}}
 keypoint_dim: ${oc.select:experiment.keypoint_dim,${oc.select:task.keypoint_dim,null}}
 task_name: ${oc.select:experiment.task_name,${task.name}}
 exp_name: ${oc.select:experiment.exp_name,default}

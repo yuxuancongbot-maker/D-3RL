@@ -36,6 +36,7 @@ from diffusion_policy.workspace.base_workspace import BaseWorkspace
 from diffusion_policy.common.checkpoint_util import TopKCheckpointManager
 from diffusion_policy.common.json_logger import JsonLogger
 from diffusion_policy.common.pytorch_util import dict_apply, optimizer_to
+from diffusion_policy.common.obs_utils import get_obs_item, index_obs_batch, obs_batch_size, stack_obs_list
 from diffusion_policy.policy.ada_bridger_policy import AdaBridgerPolicy, AdaBridgerPolicyForRL
 from diffusion_policy.model.ada_bridger.ada_scheduler import AdaScheduler
 from diffusion_policy.model.ada_bridger.pegrad_optimizer import PEGradOptimizer, PPOWithPEGrad
@@ -80,8 +81,13 @@ class RolloutBuffer:
     
     def get(self, device: torch.device) -> Dict[str, torch.Tensor]:
         """获取数据并转换为tensor"""
+        obs = stack_obs_list(self.obs)
+        if isinstance(obs, dict):
+            obs = dict_apply(obs, lambda x: x.to(device))
+        else:
+            obs = obs.to(device)
         return {
-            'obs': torch.stack(self.obs).to(device),
+            'obs': obs,
             'init_actions': torch.stack(self.init_actions).to(device),
             'actions': torch.stack(self.scheduler_actions).to(device),
             'log_probs': torch.stack(self.log_probs).to(device),
@@ -160,15 +166,39 @@ class TrainAdaBridgerWorkspace(BaseWorkspace):
                 f"不在 scheduler.refinement_steps={refinement_steps} 中"
             )
 
-        scheduler = AdaScheduler(
-            obs_dim=cfg.obs_dim,
-            action_dim=cfg.action_dim,
-            action_horizon=cfg.horizon,
-            n_obs_steps=cfg.n_obs_steps,
-            hidden_dim=cfg.scheduler.hidden_dim,
-            num_layers=cfg.scheduler.num_layers,
-            refinement_steps=refinement_steps,
-        )
+        if cfg.scheduler.get('_target_', None) is not None:
+            scheduler_kwargs = {
+                'action_dim': cfg.action_dim,
+                'action_horizon': cfg.horizon,
+                'n_obs_steps': cfg.n_obs_steps,
+                'refinement_steps': refinement_steps,
+            }
+            if cfg.scheduler.get('obs_feature_dim', None) is None:
+                inferred_dim = None
+                if hasattr(source_policy, 'encode_obs') and hasattr(source_policy, 'encoder'):
+                    inferred_dim = source_policy.encoder.output_shape()[0]
+                    model_obs_dim = getattr(getattr(source_policy, 'model', None), 'obs_dim', None)
+                    if model_obs_dim is not None:
+                        inferred_dim = model_obs_dim
+                if inferred_dim is None and hasattr(refinement_policy, 'obs_encoder'):
+                    inferred_dim = refinement_policy.obs_encoder.output_shape()[0]
+                if inferred_dim is not None:
+                    scheduler_kwargs['obs_feature_dim'] = inferred_dim
+                    print(f"  Inferred image scheduler obs_feature_dim={inferred_dim}")
+            scheduler = hydra.utils.instantiate(
+                cfg.scheduler,
+                **scheduler_kwargs,
+            )
+        else:
+            scheduler = AdaScheduler(
+                obs_dim=cfg.obs_dim,
+                action_dim=cfg.action_dim,
+                action_horizon=cfg.horizon,
+                n_obs_steps=cfg.n_obs_steps,
+                hidden_dim=cfg.scheduler.hidden_dim,
+                num_layers=cfg.scheduler.num_layers,
+                refinement_steps=refinement_steps,
+            )
 
         # 加载预训练的 Scheduler（Stage 3 输出）
         pretrain_ckpt = cfg.scheduler.get('pretrain_checkpoint', None)
@@ -180,7 +210,12 @@ class TrainAdaBridgerWorkspace(BaseWorkspace):
                 )
             print(f"Loading pretrained scheduler from: {pretrain_ckpt}")
             pretrain_data = torch.load(pretrain_ckpt, map_location=cfg.training.device)
-            scheduler.load_state_dict(pretrain_data['scheduler_state_dict'])
+            try:
+                scheduler.load_state_dict(pretrain_data['scheduler_state_dict'])
+            except RuntimeError:
+                missing, unexpected = scheduler.load_state_dict(
+                    pretrain_data['scheduler_state_dict'], strict=False)
+                print(f"  ✓ Loaded scheduler non-strict (missing={len(missing)}, unexpected={len(unexpected)})")
             print(f"  ✓ Loaded scheduler with val_acc={pretrain_data.get('val_acc', 'N/A')}")
         else:
             print("  No pretrained scheduler, training from scratch")
@@ -422,24 +457,30 @@ class TrainAdaBridgerWorkspace(BaseWorkspace):
 
                 # ========== 收集 Rollouts ==========
                 self.policy.scheduler.train()
-                rollout_info = self._collect_rollouts(
-                    env_runner=env_runner,
-                    n_rollouts=cfg.training.n_rollouts_per_epoch,
-                    device=device,
-                    lambda_cost=lambda_cost,
-                )
+                try:
+                    rollout_info = self._collect_rollouts(
+                        env_runner=env_runner,
+                        n_rollouts=cfg.training.n_rollouts_per_epoch,
+                        device=device,
+                        lambda_cost=lambda_cost,
+                    )
 
-                step_log.update({
-                    'train/mean_reward': np.mean(rollout_info['episode_rewards']),
-                    'train/mean_length': np.mean(rollout_info['episode_lengths']),
-                    'train/mean_success': np.mean(rollout_info['episode_successes']),
-                    'train/mean_steps': np.mean(rollout_info['avg_refinement_steps']),
-                })
+                    step_log.update({
+                        'train/mean_reward': np.mean(rollout_info['episode_rewards']),
+                        'train/mean_length': np.mean(rollout_info['episode_lengths']),
+                        'train/mean_success': np.mean(rollout_info['episode_successes']),
+                        'train/mean_steps': np.mean(rollout_info['avg_refinement_steps']),
+                    })
 
-                # 步数分布
-                step_counts = rollout_info['step_distribution']
-                for k, v in step_counts.items():
-                    step_log[f'train/step_{k}_ratio'] = v
+                    # 步数分布
+                    step_counts = rollout_info['step_distribution']
+                    for k, v in step_counts.items():
+                        step_log[f'train/step_{k}_ratio'] = v
+                except Exception as e:
+                    print(f"  [SKIP] Epoch {epoch_idx+1} collect crashed: {e}")
+                    rollout_info = {'buffer': RolloutBuffer(), 'episode_rewards': [0],
+                                    'episode_lengths': [0], 'episode_successes': [0],
+                                    'avg_refinement_steps': [0], 'step_distribution': {}}
 
                 # ========== PPO 更新 ==========
                 if len(rollout_info['buffer']) > 0:
@@ -447,10 +488,13 @@ class TrainAdaBridgerWorkspace(BaseWorkspace):
 
                     # 计算 GAE
                     with torch.no_grad():
-                        last_obs = buffer_data['obs'][-1:]
+                        last_obs = index_obs_batch(
+                            buffer_data['obs'],
+                            torch.tensor([obs_batch_size(buffer_data['obs']) - 1], device=device),
+                        )
                         last_init_action = buffer_data['init_actions'][-1:]
                         _, _, _, next_value = self.policy.scheduler.select_action(
-                            last_obs[:, :cfg.n_obs_steps],
+                            last_obs,
                             last_init_action,
                             deterministic=True,
                         )
@@ -552,13 +596,17 @@ class TrainAdaBridgerWorkspace(BaseWorkspace):
         for rollout_idx in range(n_rollouts):
             self.policy.reset()
             
-            # 初始化环境（可能因上次崩溃残留而失败）
+            # 初始化环境（可能因上次 MuJoCo 崩溃而失败 → 跳过该 rollout）
             init_fn_dill = env_runner.env_init_fn_dills[rollout_idx % len(env_runner.env_init_fn_dills)]
             try:
                 env.call_each('run_dill_function', args_list=[(init_fn_dill,)] * n_envs)
             except Exception:
-                env.reset()  # 清除 pending 状态后重试
-                env.call_each('run_dill_function', args_list=[(init_fn_dill,)] * n_envs)
+                try:
+                    env.reset()
+                    env.call_each('run_dill_function', args_list=[(init_fn_dill,)] * n_envs)
+                except Exception:
+                    print(f"  [WARN] Rollout {rollout_idx} recovery failed, skipping")
+                    continue
 
             obs = env.reset()
             past_action_for_policy = None
@@ -569,23 +617,27 @@ class TrainAdaBridgerWorkspace(BaseWorkspace):
             episode_max_reward = [None for _ in range(n_envs)]
             
             while (not np.all(done_arr)) and (np.max(episode_length) < env_runner.max_steps):
-                # 准备观测
-                # PushT keypoints env 会在 obs 后拼接 visibility mask (obs_dim*2)
-                # 需要检测并只取前半部分（真正的 obs）
-                raw_obs = obs[:, :env_runner.n_obs_steps].astype(np.float32)
-                expected_obs_dim = cfg.obs_dim
-                actual_obs_dim = raw_obs.shape[-1]
-                if actual_obs_dim == expected_obs_dim * 2:
-                    # PushT keypoints: obs + mask 拼接，只取前半
-                    raw_obs = raw_obs[..., :expected_obs_dim]
-                np_obs_dict = {
-                    'obs': raw_obs
-                }
+                # 准备观测：lowdim runner 返回 ndarray，image runner 返回 modality dict。
+                if isinstance(obs, dict):
+                    np_obs_dict = {
+                        k: v[:, :env_runner.n_obs_steps].astype(np.float32)
+                        for k, v in obs.items()
+                    }
+                else:
+                    # PushT keypoints env 会在 obs 后拼接 visibility mask (obs_dim*2)
+                    # 需要检测并只取前半部分（真正的 obs）
+                    raw_obs = obs[:, :env_runner.n_obs_steps].astype(np.float32)
+                    expected_obs_dim = cfg.obs_dim
+                    actual_obs_dim = raw_obs.shape[-1]
+                    if actual_obs_dim == expected_obs_dim * 2:
+                        raw_obs = raw_obs[..., :expected_obs_dim]
+                    np_obs_dict = {'obs': raw_obs}
                 if cfg.get('past_action_visible', False) and (past_action_for_policy is not None):
                     np_obs_dict['past_action'] = past_action_for_policy.astype(np.float32)
-                obs_dict = dict_apply(np_obs_dict, 
+                obs_dict = dict_apply(np_obs_dict,
                     lambda x: torch.from_numpy(x).to(device=device))
-                
+                scheduler_obs = self.policy._get_scheduler_obs(obs_dict)
+
                 # 使用返回中间结果的方式调用策略
                 with torch.no_grad():
                     result = self.policy.predict_action(obs_dict, return_intermediate=True)
@@ -601,7 +653,7 @@ class TrainAdaBridgerWorkspace(BaseWorkspace):
                         continue
 
                     rollout_data[env_idx].append({
-                        'obs': obs_dict['obs'][env_idx].clone(),
+                        'obs': get_obs_item(scheduler_obs, env_idx),
                         'init_action': init_action[env_idx].clone(),
                         'scheduler_action_idx': result['scheduler_action_idx'][env_idx].clone() if result['scheduler_action_idx'].dim() > 0 else result['scheduler_action_idx'].clone(),
                         'scheduler_log_prob': result['scheduler_log_prob'][env_idx].clone() if result['scheduler_log_prob'].dim() > 0 else result['scheduler_log_prob'].clone(),
@@ -616,7 +668,7 @@ class TrainAdaBridgerWorkspace(BaseWorkspace):
                 
                 # 执行动作
                 np_action = action.detach().cpu().numpy()
-                action_for_env = np_action[:, env_runner.n_latency_steps:]
+                action_for_env = np_action[:, getattr(env_runner, 'n_latency_steps', 0):]
                 # 为下一步策略输入缓存“策略动作空间”下的历史动作
                 past_action_for_policy = action_for_env.copy()
                 
@@ -632,19 +684,14 @@ class TrainAdaBridgerWorkspace(BaseWorkspace):
                         neginf=-1.0,
                     )
                 
-                # Step 环境（捕获 MuJoCo 物理崩溃，重置 env 并跳过该 rollout）
+                # Step 环境（捕获 MuJoCo 物理崩溃）
                 try:
-                    obs, reward, done_arr_new, info = env.step(action_for_env)
+                    obs, reward, done_arr, info = env.step(action_for_env)
                 except Exception as e:
-                    print(f"  [WARN] env.step failed: {e}, resetting all envs")
-                    done_arr_new = np.ones(n_envs, dtype=bool)
+                    print(f"  [WARN] env.step failed (DOF15), marking all done")
+                    done_arr = np.ones(n_envs, dtype=bool)
                     reward = [0.0] * n_envs
                     info = [{}] * n_envs
-                    try:
-                        obs = env.reset()
-                    except Exception:
-                        pass  # reset 也可能失败，那就跳过整个 rollout
-                done_arr = done_arr | done_arr_new
                 episode_length += (~done_arr).astype(np.int32) * action_for_env.shape[1]
 
                 # 记录该 episode 的最大即时奖励（回退用）
@@ -764,13 +811,14 @@ class TrainAdaBridgerWorkspace(BaseWorkspace):
         total_kl_loss = 0.0
         n_updates = 0
 
+        num_items = obs_batch_size(obs)
         for _ in range(cfg.ppo.n_epochs):
-            indices = torch.randperm(len(obs))
-            for start in range(0, len(obs), cfg.ppo.batch_size):
+            indices = torch.randperm(num_items, device=init_actions.device)
+            for start in range(0, num_items, cfg.ppo.batch_size):
                 end = start + cfg.ppo.batch_size
                 idx = indices[start:end]
 
-                batch_obs = obs[idx]
+                batch_obs = index_obs_batch(obs, idx)
                 batch_init = init_actions[idx]
                 batch_act = actions[idx]
                 batch_old_lp = old_log_probs[idx]

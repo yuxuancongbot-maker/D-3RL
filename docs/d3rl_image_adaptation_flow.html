@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>D3RL Image Adaptation Flow</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #111827;
+      --panel-2: #172033;
+      --ink: #e5e7eb;
+      --muted: #94a3b8;
+      --line: #334155;
+      --image: #38bdf8;
+      --feature: #a78bfa;
+      --policy: #34d399;
+      --scheduler: #fbbf24;
+      --refiner: #fb7185;
+      --lowdim: #cbd5e1;
+      --shadow: rgba(0, 0, 0, 0.22);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at top left, rgba(56, 189, 248, 0.18), transparent 34rem),
+        radial-gradient(circle at bottom right, rgba(251, 113, 133, 0.14), transparent 32rem),
+        var(--bg);
+      color: var(--ink);
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 36px 20px 48px;
+    }
+
+    header {
+      margin-bottom: 22px;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(28px, 4vw, 44px);
+      letter-spacing: -0.04em;
+    }
+
+    .subtitle {
+      max-width: 860px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 16px;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 22px 0 28px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.7);
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .canvas {
+      position: relative;
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      border-radius: 28px;
+      background: linear-gradient(180deg, rgba(17, 24, 39, 0.92), rgba(15, 23, 42, 0.94));
+      box-shadow: 0 20px 70px var(--shadow);
+      padding: 28px;
+      overflow: hidden;
+    }
+
+    .lane-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 14px;
+      color: #f8fafc;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .lane-label small {
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(128px, 1fr));
+      gap: 14px;
+      align-items: stretch;
+      margin-bottom: 26px;
+    }
+
+    .card {
+      position: relative;
+      min-height: 132px;
+      padding: 16px 15px;
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      border-radius: 18px;
+      background: rgba(23, 32, 51, 0.9);
+      box-shadow: inset 0 1px rgba(255,255,255,0.04);
+    }
+
+    .card::after {
+      content: "→";
+      position: absolute;
+      right: -18px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      font-weight: 800;
+      font-size: 21px;
+      z-index: 2;
+    }
+
+    .card:last-child::after { content: ""; }
+
+    .card h2 {
+      margin: 0 0 9px;
+      font-size: 16px;
+      letter-spacing: -0.02em;
+    }
+
+    .card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .tag {
+      display: inline-block;
+      margin-bottom: 10px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      color: #020617;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+
+    .image { border-color: color-mix(in srgb, var(--image) 52%, var(--line)); }
+    .feature { border-color: color-mix(in srgb, var(--feature) 52%, var(--line)); }
+    .policy { border-color: color-mix(in srgb, var(--policy) 52%, var(--line)); }
+    .scheduler { border-color: color-mix(in srgb, var(--scheduler) 52%, var(--line)); }
+    .refiner { border-color: color-mix(in srgb, var(--refiner) 52%, var(--line)); }
+
+    .image .tag { background: var(--image); }
+    .feature .tag { background: var(--feature); }
+    .policy .tag { background: var(--policy); }
+    .scheduler .tag { background: var(--scheduler); }
+    .refiner .tag { background: var(--refiner); }
+
+    .split {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 18px;
+      margin-top: 18px;
+    }
+
+    .panel {
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      border-radius: 22px;
+      background: rgba(15, 23, 42, 0.72);
+      padding: 18px;
+    }
+
+    .panel h3 {
+      margin: 0 0 12px;
+      font-size: 18px;
+      letter-spacing: -0.02em;
+    }
+
+    .notes {
+      display: grid;
+      gap: 10px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .notes li {
+      display: grid;
+      grid-template-columns: 22px 1fr;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .num {
+      display: inline-grid;
+      place-items: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 8px;
+      background: var(--panel-2);
+      color: var(--ink);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .lowdim-track {
+      margin-top: 22px;
+      padding: 18px;
+      border: 1px dashed rgba(203, 213, 225, 0.48);
+      border-radius: 22px;
+      background: rgba(203, 213, 225, 0.055);
+    }
+
+    .lowdim-flow {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(130px, 1fr));
+      gap: 12px;
+    }
+
+    .low {
+      min-height: 82px;
+      padding: 12px;
+      border: 1px solid rgba(203, 213, 225, 0.32);
+      border-radius: 16px;
+      background: rgba(15, 23, 42, 0.72);
+    }
+
+    .low strong {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--ink);
+      font-size: 13px;
+    }
+
+    .low span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    code {
+      color: #bfdbfe;
+      background: rgba(59, 130, 246, 0.12);
+      border: 1px solid rgba(59, 130, 246, 0.16);
+      padding: 1px 5px;
+      border-radius: 7px;
+      font-size: 0.92em;
+    }
+
+    .callout {
+      border-left: 4px solid var(--scheduler);
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: rgba(251, 191, 36, 0.09);
+      color: #fde68a;
+      font-size: 14px;
+    }
+
+    @media (max-width: 980px) {
+      .flow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .card::after { display: none; }
+      .split { grid-template-columns: 1fr; }
+      .lowdim-flow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 560px) {
+      main { padding: 24px 12px 36px; }
+      .canvas { padding: 18px; border-radius: 20px; }
+      .flow, .lowdim-flow { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>D3RL Image 适配数据流</h1>
+      <p class="subtitle">
+        核心原则：image 分支只在前端多做一次 <code>MultiImageObsEncoder</code> 编码，
+        D3RL 的 scheduler / refiner 主逻辑仍然使用 <code>[B, T, D]</code> 特征序列；lowdim 旧路径保持原样。
+      </p>
+    </header>
+
+    <div class="legend" aria-label="图例">
+      <span class="chip"><i class="dot" style="background: var(--image)"></i>Raw image / modality</span>
+      <span class="chip"><i class="dot" style="background: var(--feature)"></i>Encoded feature</span>
+      <span class="chip"><i class="dot" style="background: var(--policy)"></i>Source policy</span>
+      <span class="chip"><i class="dot" style="background: var(--scheduler)"></i>Ada scheduler</span>
+      <span class="chip"><i class="dot" style="background: var(--refiner)"></i>Diffusion / SI refiner</span>
+    </div>
+
+    <section class="canvas" aria-label="D3RL image data flow diagram">
+      <div class="lane-label">Image path <small>新增适配路径</small></div>
+
+      <div class="flow">
+        <article class="card image">
+          <span class="tag">Input</span>
+          <h2>Raw image obs</h2>
+          <p><code>{image, agent_pos, ...}</code><br />形状如 <code>[B,T,C,H,W]</code> / <code>[B,T,D]</code></p>
+        </article>
+
+        <article class="card feature">
+          <span class="tag">Encode</span>
+          <h2>MultiImageObsEncoder</h2>
+          <p>把多相机图像和低维状态压成 <code>obs_feat [B,T,D_feat]</code></p>
+        </article>
+
+        <article class="card policy">
+          <span class="tag">System 1</span>
+          <h2>Image source policy</h2>
+          <p>Transformer 或 VAE source 使用 <code>obs_feat</code> 生成 <code>init_action</code></p>
+        </article>
+
+        <article class="card scheduler">
+          <span class="tag">Reuse</span>
+          <h2>AdaScheduler</h2>
+          <p>优先复用 source 返回的 <code>obs_feat</code>，预测 <code>k ∈ {0,1,2,5}</code></p>
+        </article>
+
+        <article class="card refiner">
+          <span class="tag">System 2</span>
+          <h2>Image refiner</h2>
+          <p>refiner 用自己的 image encoder 构造 condition，对 <code>init_action</code> 做 DDIM/SI 精炼</p>
+        </article>
+
+        <article class="card policy">
+          <span class="tag">Output</span>
+          <h2>Env action</h2>
+          <p>输出 <code>refined_action</code>；若 <code>k=0</code> 则直接执行 source action</p>
+        </article>
+      </div>
+
+      <div class="split">
+        <div class="panel">
+          <h3>代码里对应怎么走</h3>
+          <ul class="notes">
+            <li><span class="num">1</span><span><code>ActionPredictorImagePolicy.predict_action()</code> 先调用 <code>encode_obs()</code> 得到 <code>obs_feat</code>。</span></li>
+            <li><span class="num">2</span><span>返回结果里带上 <code>obs_feat</code>，Ada-BRIDGER scheduler 可直接复用，不重复 encode。</span></li>
+            <li><span class="num">3</span><span><code>AdaBridgerPolicy._get_scheduler_obs()</code> 如果发现 <code>obs_feat</code> 维度匹配，就把它作为 scheduler 输入。</span></li>
+            <li><span class="num">4</span><span>如果 feature 维度不匹配，则回退到 <code>AdaSchedulerForImages</code>，由 scheduler 自己 encode raw modality。</span></li>
+            <li><span class="num">5</span><span>image refiner 分支使用 <code>refine_policy.obs_encoder</code> 生成 diffusion condition，保证和 refiner 训练方式一致。</span></li>
+          </ul>
+        </div>
+
+        <div class="panel">
+          <h3>关键保护</h3>
+          <div class="callout">
+            Lowdim 输入仍然是 <code>{"obs": Tensor[B,T,D]}</code>。
+            只要检测到这个格式，就直接走旧逻辑，不进入 image modality 分支。
+          </div>
+          <ul class="notes" style="margin-top: 14px;">
+            <li><span class="num">✓</span><span>scheduler actor/critic 仍复用原来的 <code>AdaScheduler</code>。</span></li>
+            <li><span class="num">✓</span><span>image 只新增 encoder wrapper 和 dict obs 处理。</span></li>
+            <li><span class="num">✓</span><span>normalizer 缺少 image key 时保留原始 tensor，避免破坏旧 checkpoint。</span></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="lowdim-track">
+        <div class="lane-label">Lowdim path <small>旧路径保持不变</small></div>
+        <div class="lowdim-flow">
+          <div class="low"><strong>Lowdim obs</strong><span><code>{"obs": [B,T,D]}</code></span></div>
+          <div class="low"><strong>Source policy</strong><span>直接用 lowdim obs 生成 <code>init_action</code></span></div>
+          <div class="low"><strong>AdaScheduler</strong><span>输入仍是 <code>obs[:, :T]</code> + action</span></div>
+          <div class="low"><strong>Lowdim refiner</strong><span>原 DDIM/SI refinement 逻辑不变</span></div>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

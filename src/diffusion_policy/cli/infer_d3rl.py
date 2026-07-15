@@ -487,6 +487,14 @@ def main():
     print(f"  Avg k (refine):    {np.mean(ks):.2f}")
     if ms_list:
         print(f"  Avg inference:     {np.mean(ms_list):.1f} ms  (~{1000/np.mean(ms_list):.0f} Hz)")
+
+    internal_stats = d3rl_policy.get_inference_stats()
+    if internal_stats.get('total_calls', 0) > 0:
+        print("  Internal timing:")
+        print(f"    source:          {internal_stats.get('avg_source_time', 0) * 1000:.2f} ms")
+        print(f"    scheduler:       {internal_stats.get('avg_scheduler_time', 0) * 1000:.2f} ms")
+        print(f"    refine:          {internal_stats.get('avg_refine_time', 0) * 1000:.2f} ms")
+        print(f"    total:           {internal_stats.get('avg_total_time', 0) * 1000:.2f} ms")
     total_k = Counter()
     for r in all_results:
         total_k.update(r["k_distribution"])

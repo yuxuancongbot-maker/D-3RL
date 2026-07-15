@@ -258,17 +258,31 @@ class AdaBridgerPolicy(nn.Module):
             pa_horizon = getattr(self.source_policy, 'prev_action_horizon', self.horizon)
             prev_action = prev_action[:, :pa_horizon]
         with torch.no_grad():
-            source_obs_dict = obs_dict
+            source_obs_candidates = [obs_dict]
             if self._is_image_obs(obs_dict) and 'obs' not in obs_dict:
-                # Image source policies in this repo accept either top-level
-                # modalities (VAE) or {'obs': modalities} (Transformer).
-                source_obs_dict = {'obs': obs_dict}
-            try:
-                source_result = self.source_policy.predict_action(
-                    source_obs_dict, prev_action=prev_action)
-            except AssertionError:
-                source_result = self.source_policy.predict_action(
-                    obs_dict, prev_action=prev_action)
+                # Some image source policies expect top-level modalities, while
+                # ActionPredictorImagePolicy also accepts {'obs': modalities}.
+                source_obs_candidates.append({'obs': obs_dict})
+
+            last_error = None
+            source_result = None
+            for source_obs_dict in source_obs_candidates:
+                try:
+                    source_result = self.source_policy.predict_action(
+                        source_obs_dict, prev_action=prev_action)
+                    break
+                except TypeError as e:
+                    # Diffusion image policies do not take prev_action.
+                    last_error = e
+                    try:
+                        source_result = self.source_policy.predict_action(source_obs_dict)
+                        break
+                    except (AssertionError, TypeError) as inner_e:
+                        last_error = inner_e
+                except AssertionError as e:
+                    last_error = e
+            if source_result is None:
+                raise last_error
         init_action = source_result['action_pred']  # [B, horizon, action_dim]
 
         if use_cuda_timing:

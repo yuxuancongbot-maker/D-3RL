@@ -1,0 +1,921 @@
+{
+  "protocol": {
+    "device": "cuda:2",
+    "n_episodes": 20,
+    "seed_start": 100000,
+    "warmup_episodes": 3,
+    "warmup_seed_start": 99000,
+    "timing": "external wall-clock with cuda synchronize, first decision per episode excluded; internal timing aggregated per episode from policy stats"
+  },
+  "methods": {
+    "ppo_scheduler149": {
+      "name": "ppo_scheduler149",
+      "summary": {
+        "success": 0.65,
+        "mean_reward": 0.65,
+        "avg_nfe": 1.677840909090909,
+        "latency_external_ms": 16.15556952190296,
+        "latency_external_all_ms": 16.083034311569385,
+        "internal_total_ms": 15.512394008006172,
+        "internal_source_ms": 1.0648961297739512,
+        "internal_scheduler_ms": 1.5305049204295662,
+        "internal_refine_ms": 12.916992960884919,
+        "total_calls": 1760,
+        "k_counts": {
+          "0": 427,
+          "1": 268,
+          "2": 880,
+          "5": 185
+        }
+      },
+      "episodes": [
+        {
+          "seed": 100000,
+          "success": 0.0,
+          "reward": 0.0,
+          "avg_nfe": 1.2613636363636365,
+          "latency_external_ms": 13.209275815678739,
+          "latency_external_all_ms": 13.090805224650962,
+          "n_calls": 88,
+          "k_counts": {
+            "0": 45,
+            "1": 5,
+            "2": 28,
+            "5": 10
+          },
+          "internal": {
+            "total_calls": 87,
+            "avg_total_ms": 12.557707337127333,
+            "avg_source_ms": 1.0562692428457323,
+            "avg_scheduler_ms": 1.5951260705103816,
+            "avg_refine_ms": 9.90631212132726
+          }
+        },
+        {
+          "seed": 100001,
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_nfe": 1.1818181818181819,
+          "latency_external_ms": 12.487466457760197,
+          "latency_external_all_ms": 12.562870968725871,
+          "n_calls": 88,
+          "k_counts": {
+            "0": 36,
+            "2": 52
+          },
+          "internal": {
+            "total_calls": 87,
+            "avg_total_ms": 11.824740015227219,
+            "avg_source_ms": 1.0653785748043276,
+            "avg_scheduler_ms": 1.4810982976836717,
+            "avg_refine_ms": 9.278263137610255
+          }
+        },
+        {
+          "seed": 100002,
+          "success": 0.0,
+          "reward": 0.0,
+          "avg_nfe": 1.0681818181818181,
+          "latency_external_ms": 11.389524290530845,
+          "latency_external_all_ms": 11.292302727021955,
+          "n_calls": 88,
+          "k_counts": {
+            "0": 58,
+            "1": 11,
+            "2": 4,
+            "5": 15
+          },
+          "internal": {
+            "total_calls": 87,
+            "avg_total_ms": 10.699696842281297,
+            "avg_source_ms": 1.0447709423372118,
+            "avg_scheduler_ms": 1.6041908935568803,
+            "avg_refine_ms": 8.05073503393214
+          }
+        },
+        {
+          "seed": 100003,
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_nfe": 1.8636363636363635,
+          "latency_external_ms": 17.62192421218102,
+          "latency_external_all_ms": 17.460525840182196,
+          "n_calls": 88,
+          "k_counts": {
+            "0": 6,
+            "2": 82
+          },
+          "internal": {
+            "total_calls": 87,
+            "avg_total_ms": 17.006934823661013,
+            "avg_source_ms": 1.0808360501267444,
+            "avg_scheduler_ms": 1.5316012905932015,
+            "avg_refine_ms": 14.394497518648459
+          }
+        },
+        {
+          "seed": 100004,
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_nfe": 2.3295454545454546,
+          "latency_external_ms": 20.635827797754057,
+          "latency_external_all_ms": 20.61378823550926,
+          "n_calls": 88,
+          "k_counts": {
+            "0": 5,
+            "2": 70,
+            "5": 13
+          },
+          "internal": {
+            "total_calls": 87,
+            "avg_total_ms": 19.983995681521538,
+            "avg_source_ms": 1.1157870395430203,
+            "avg_scheduler_ms": 1.460514574452175,
+            "avg_refine_ms": 17.407694013460123
+          }
+        },
+        {
+          "seed": 100005,
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_nfe": 2.090909090909091,
+          "latency_external_ms": 19.573931732140053,
+          "latency_external_all_ms": 19.394352640533313,
+          "n_calls": 88,
+          "k_counts": {
+            "0": 3,
+            "1": 4,
+            "2": 75,
+            "5": 6
+          },
+          "internal": {
+            "total_calls": 87,
+            "avg_total_ms": 18.932279819729686,
+            "avg_source_ms": 1.0230528705421535,
+            "avg_scheduler_ms": 1.5023106239781578,
+            "avg_refine_ms": 16.406916413327743
+          }
+        },
+        {
+          "seed": 100006,
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_nfe": 1.6363636363636365,
+          "latency_external_ms": 16.299588359549812,
+          "latency_external_all_ms": 16.153963790698484,
+          "n_calls": 88,
+          "k_counts": {
+            "0": 8,
+            "1": 16,
+            "2": 64
+          },
+          "internal": {
+            "total_calls": 87,
+            "avg_total_ms": 15.694874103041906,
+            "avg_source_ms": 1.083761291257266,
+            "avg_scheduler_ms": 1.5138449584877909,
+            "avg_refine_ms": 13.097267885741926
+          }
+        },
+        {
+          "seed": 100007,
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_nfe": 1.8181818181818181,
+          "latency_external_ms": 17.706464665631454,
+          "latency_external_all_ms": 17.544558218849655,
+          "n_calls": 88,
+          "k_counts": {
+            "0": 2,
+            "1": 30,
+            "2": 50,
+            "5": 6
+          },
+          "internal": {
+            "total_calls": 87,
+            "avg_total_ms": 17.015419655832748,
+            "avg_source_ms": 1.0026994039272439,
+            "avg_scheduler_ms": 1.5592717260253437,
+            "avg_refine_ms": 14.453448412062105
+          }
+        },
+        {
+          "seed": 100008,
+          "success": 0.0,
+          "reward": 0.0,
+          "avg_nfe": 1.5227272727272727,
+          "latency_external_ms": 14.89813775680531,
+          "latency_external_all_ms": 14.944340271705931,
+          "n_calls": 88,
+          "k_counts": {
+            "0": 37,
+            "1": 13,
+            "2": 23,
+            "5": 15
+          },
+          "internal": {
+            "total_calls": 87,
+            "avg_total_ms": 14.240698512943311,
+            "avg_source_ms": 1.0394081829608173,
+            "avg_scheduler_ms": 1.5203994476509382,
+            "avg_refine_ms": 11.68089097184558
+          }
+        },
+        {
+          "seed": 100009,
+          "success": 0.0,
+          "reward": 0.0,
+          "avg_nfe": 1.3522727272727273,
+          "latency_external_ms": 13.37110908466509,
+          "latency_external_all_ms": 13.431186025792902,
+          "n_calls": 88,
+          "k_counts": {
+            "0": 40,
+            "1": 25,
+            "2": 7,
+            "5": 16
+          },
+          "internal": {
+            "total_calls": 87,
+            "avg_total_ms": 12.739737020141776,
+            "avg_source_ms": 1.016362667768851,
+            "avg_scheduler_ms": 1.565859312983765,
+            "avg_refine_ms": 10.157514968155029
+          }
+        },
+        {
+          "seed": 100010,
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_nfe": 2.1136363636363638,
+          "latency_external_ms": 19.180078038025176,
+          "latency_external_all_ms": 19.17236892040819,
+          "n_calls": 88,
+          "k_counts": {
+            "0": 2,
+            "1": 25,
+            "2": 48,
+            "5": 13
+          },
+          "internal": {
+            "total_calls": 87,
+            "avg_total_ms": 18.58577652361201,
+            "avg_source_ms": 1.1789708541727615,
+            "avg_scheduler_ms": 1.4789587173493173,
+            "avg_refine_ms": 15.927846960637758
+          }
+        },
+        {
+          "seed": 100011,
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_nfe": 2.159090909090909,
+          "latency_external_ms": 19.5997702171919,
+          "latency_external_all_ms": 19.579607993364334,
+          "n_calls": 88,
+          "k_counts": {
+            "0": 8,
+            "2": 70,
+            "5": 10
+          },
+          "internal": {
+            "total_calls": 87,
+            "avg_total_ms": 18.930582071172783,
+            "avg_source_ms": 1.1058618919602754,
+            "avg_scheduler_ms": 1.5202548966325562,
+            "avg_refine_ms": 16.30446525842176
+          }
+        },
+        {
+          "seed": 100012,
+          "success": 0.0,
+          "reward": 0.0,
+          "avg_nfe": 1.1022727272727273,
+          "latency_external_ms": 11.932390613545632,
+          "latency_external_all_ms": 11.838930733078582,
+          "n_calls": 88,
+          "k_counts": {
+            "0": 37,
+            "1": 35,
+            "2": 6,
+            "5": 10
+          },
+          "internal": {
+            "total_calls": 87,
+            "avg_total_ms": 11.318451862225587,
+            "avg_source_ms": 1.0468123281139068,
+            "avg_scheduler_ms": 1.5627082358408801,
+            "avg_refine_ms": 8.708931281486924
+          }
+        },
+        {
+          "seed": 100013,
+          "success": 0.0,
+          "reward": 0.0,
+          "avg_nfe": 0.6818181818181818,
+          "latency_external_ms": 8.48529513539939,
+          "latency_external_all_ms": 8.428732356564565,
+          "n_calls": 88,
+          "k_counts": {
+            "0": 76,
+            "5": 12
+          },
+          "internal": {
+            "total_calls": 87,
+            "avg_total_ms": 7.837216749958609,
+            "avg_source_ms": 1.0522850539492465,
+            "avg_scheduler_ms": 1.5848014690410133,
+            "avg_refine_ms": 5.2001302135779115
+          }
+        },
+        {
+          "seed": 100014,
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_nfe": 2.022727272727273,
+          "latency_external_ms": 18.81213140427724,
+          "latency_external_all_ms": 18.63705729854039,
+          "n_calls": 88,
+          "k_counts": {
+            "0": 13,
+            "1": 2,
+            "2": 63,
+            "5": 10
+          },
+          "internal": {
+            "total_calls": 87,
+            "avg_total_ms": 18.16435975864016,
+            "avg_source_ms": 1.1013016995342297,
+            "avg_scheduler_ms": 1.5978295142674048,
+            "avg_refine_ms": 15.465228493986443
+          }
+        },
+        {
+          "seed": 100015,
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_nfe": 2.0113636363636362,
+          "latency_external_ms": 18.117672892223144,
+          "latency_external_all_ms": 18.358197444203224,
+          "n_calls": 88,
+          "k_counts": {
+            "0": 16,
+            "2": 61,
+            "5": 11
+          },
+          "internal": {
+            "total_calls": 87,
+            "avg_total_ms": 17.451941240792983,
+            "avg_source_ms": 1.1339582506267505,
+            "avg_scheduler_ms": 1.483177936356247,
+            "avg_refine_ms": 14.834805021663302
+          }
+        },
+        {
+          "seed": 100016,
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_nfe": 1.9431818181818181,
+          "latency_external_ms": 18.41556544190851,
+          "latency_external_all_ms": 18.247746216895226,
+          "n_calls": 88,
+          "k_counts": {
+            "0": 2,
+            "1": 10,
+            "2": 73,
+            "5": 3
+          },
+          "internal": {
+            "total_calls": 87,
+            "avg_total_ms": 17.798744272911684,
+            "avg_source_ms": 1.0269355383412593,
+            "avg_scheduler_ms": 1.5219788510223917,
+            "avg_refine_ms": 15.249829867611176
+          }
+        },
+        {
+          "seed": 100017,
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_nfe": 2.034090909090909,
+          "latency_external_ms": 18.677068017851347,
+          "latency_external_all_ms": 18.506241581318054,
+          "n_calls": 88,
+          "k_counts": {
+            "0": 11,
+            "1": 8,
+            "2": 58,
+            "5": 11
+          },
+          "internal": {
+            "total_calls": 87,
+            "avg_total_ms": 18.029732830222997,
+            "avg_source_ms": 1.0065007798973171,
+            "avg_scheduler_ms": 1.5066434951611505,
+            "avg_refine_ms": 15.516588528429146
+          }
+        },
+        {
+          "seed": 100018,
+          "success": 0.0,
+          "reward": 0.0,
+          "avg_nfe": 0.9886363636363636,
+          "latency_external_ms": 11.857207703950076,
+          "latency_external_all_ms": 11.767356381328268,
+          "n_calls": 88,
+          "k_counts": {
+            "0": 8,
+            "1": 73,
+            "2": 7
+          },
+          "internal": {
+            "total_calls": 87,
+            "avg_total_ms": 11.227491663790298,
+            "avg_source_ms": 1.0916877224527555,
+            "avg_scheduler_ms": 1.4960820202745133,
+            "avg_refine_ms": 8.639721943541888
+          }
+        },
+        {
+          "seed": 100019,
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_nfe": 2.375,
+          "latency_external_ms": 20.840960800990292,
+          "latency_external_all_ms": 20.635753362016246,
+          "n_calls": 88,
+          "k_counts": {
+            "0": 14,
+            "1": 11,
+            "2": 39,
+            "5": 24
+          },
+          "internal": {
+            "total_calls": 87,
+            "avg_total_ms": 20.20749937528852,
+            "avg_source_ms": 1.0252822103171513,
+            "avg_scheduler_ms": 1.5234460767235436,
+            "avg_refine_ms": 17.65877117223144
+          }
+        }
+      ]
+    },
+    "pegrad_ckpt199": {
+      "name": "pegrad_ckpt199",
+      "summary": {
+        "success": 0.85,
+        "mean_reward": 0.85,
+        "avg_nfe": 2.1204545454545456,
+        "latency_external_ms": 19.386082435904562,
+        "latency_external_all_ms": 19.34988716278564,
+        "internal_total_ms": 18.73822406948298,
+        "internal_source_ms": 1.0829372325847888,
+        "internal_scheduler_ms": 1.5231017743113542,
+        "internal_refine_ms": 16.132185092294822,
+        "total_calls": 1760,
+        "k_counts": {
+          "0": 233,
+          "1": 435,
+          "2": 721,
+          "5": 371
+        }
+      },
+      "episodes": [
+        {
+          "seed": 100000,
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_nfe": 1.6022727272727273,
+          "latency_external_ms": 15.777428238385026,
+          "latency_external_all_ms": 15.639689793302255,
+          "n_calls": 88,
+          "k_counts": {
+            "0": 18,
+            "1": 11,
+            "2": 55,
+            "5": 4
+          },
+          "internal": {
+            "total_calls": 87,
+            "avg_total_ms": 15.155778915032572,
+            "avg_source_ms": 1.133684228206503,
+            "avg_scheduler_ms": 1.4760448749300261,
+            "avg_refine_ms": 12.546049822841761
+          }
+        },
+        {
+          "seed": 100001,
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_nfe": 1.4772727272727273,
+          "latency_external_ms": 15.274297627995068,
+          "latency_external_all_ms": 15.302361401898617,
+          "n_calls": 88,
+          "k_counts": {
+            "0": 4,
+            "1": 44,
+            "2": 38,
+            "5": 2
+          },
+          "internal": {
+            "total_calls": 87,
+            "avg_total_ms": 14.62422657149962,
+            "avg_source_ms": 1.0320202310880024,
+            "avg_scheduler_ms": 1.5463646848996482,
+            "avg_refine_ms": 12.045841583824213
+          }
+        },
+        {
+          "seed": 100002,
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_nfe": 2.125,
+          "latency_external_ms": 19.32406092555016,
+          "latency_external_all_ms": 19.5385212904181,
+          "n_calls": 88,
+          "k_counts": {
+            "1": 28,
+            "2": 47,
+            "5": 13
+          },
+          "internal": {
+            "total_calls": 87,
+            "avg_total_ms": 18.692543347676594,
+            "avg_source_ms": 1.080168828196909,
+            "avg_scheduler_ms": 1.571712740177781,
+            "avg_refine_ms": 16.040661735096197
+          }
+        },
+        {
+          "seed": 100003,
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_nfe": 1.9772727272727273,
+          "latency_external_ms": 18.67503270335581,
+          "latency_external_all_ms": 18.506293142722413,
+          "n_calls": 88,
+          "k_counts": {
+            "0": 5,
+            "1": 10,
+            "2": 67,
+            "5": 6
+          },
+          "internal": {
+            "total_calls": 87,
+            "avg_total_ms": 18.015855778222793,
+            "avg_source_ms": 1.095223911192225,
+            "avg_scheduler_ms": 1.541451394974104,
+            "avg_refine_ms": 15.37918052084653
+          }
+        },
+        {
+          "seed": 100004,
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_nfe": 1.8636363636363635,
+          "latency_external_ms": 18.305969071285478,
+          "latency_external_all_ms": 18.243225005624648,
+          "n_calls": 88,
+          "k_counts": {
+            "0": 10,
+            "1": 43,
+            "2": 18,
+            "5": 17
+          },
+          "internal": {
+            "total_calls": 87,
+            "avg_total_ms": 17.64542755587348,
+            "avg_source_ms": 1.0450880013663193,
+            "avg_scheduler_ms": 1.60815999631224,
+            "avg_refine_ms": 14.992179593384462
+          }
+        },
+        {
+          "seed": 100005,
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_nfe": 2.0113636363636362,
+          "latency_external_ms": 19.342650263302627,
+          "latency_external_all_ms": 19.154536294412207,
+          "n_calls": 88,
+          "k_counts": {
+            "0": 2,
+            "1": 7,
+            "2": 75,
+            "5": 4
+          },
+          "internal": {
+            "total_calls": 87,
+            "avg_total_ms": 18.71356463706356,
+            "avg_source_ms": 1.0415904330111097,
+            "avg_scheduler_ms": 1.5896540633563336,
+            "avg_refine_ms": 16.082320112606578
+          }
+        },
+        {
+          "seed": 100006,
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_nfe": 2.159090909090909,
+          "latency_external_ms": 19.72491781216586,
+          "latency_external_all_ms": 19.543221220374107,
+          "n_calls": 88,
+          "k_counts": {
+            "0": 13,
+            "1": 29,
+            "2": 23,
+            "5": 23
+          },
+          "internal": {
+            "total_calls": 87,
+            "avg_total_ms": 19.089784570123957,
+            "avg_source_ms": 1.0256658429386971,
+            "avg_scheduler_ms": 1.5229826240703979,
+            "avg_refine_ms": 16.54113627044516
+          }
+        },
+        {
+          "seed": 100007,
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_nfe": 2.5113636363636362,
+          "latency_external_ms": 21.570586577999865,
+          "latency_external_all_ms": 21.769311670637265,
+          "n_calls": 88,
+          "k_counts": {
+            "0": 9,
+            "1": 12,
+            "2": 42,
+            "5": 25
+          },
+          "internal": {
+            "total_calls": 87,
+            "avg_total_ms": 20.865871451366907,
+            "avg_source_ms": 1.2335102503327118,
+            "avg_scheduler_ms": 1.3694532466236093,
+            "avg_refine_ms": 18.262908054062102
+          }
+        },
+        {
+          "seed": 100008,
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_nfe": 2.0454545454545454,
+          "latency_external_ms": 18.7433244788955,
+          "latency_external_all_ms": 18.73973200351677,
+          "n_calls": 88,
+          "k_counts": {
+            "0": 1,
+            "1": 18,
+            "2": 61,
+            "5": 8
+          },
+          "internal": {
+            "total_calls": 87,
+            "avg_total_ms": 18.100082712611933,
+            "avg_source_ms": 1.063433197723038,
+            "avg_scheduler_ms": 1.529523130806013,
+            "avg_refine_ms": 15.507126459445077
+          }
+        },
+        {
+          "seed": 100009,
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_nfe": 4.3977272727272725,
+          "latency_external_ms": 34.04646632315099,
+          "latency_external_all_ms": 34.10503609021279,
+          "n_calls": 88,
+          "k_counts": {
+            "0": 7,
+            "2": 6,
+            "5": 75
+          },
+          "internal": {
+            "total_calls": 87,
+            "avg_total_ms": 33.40563420043594,
+            "avg_source_ms": 1.048485155078186,
+            "avg_scheduler_ms": 1.5149899802462399,
+            "avg_refine_ms": 30.84215921050623
+          }
+        },
+        {
+          "seed": 100010,
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_nfe": 2.7386363636363638,
+          "latency_external_ms": 23.51461935403018,
+          "latency_external_all_ms": 23.676514054055918,
+          "n_calls": 88,
+          "k_counts": {
+            "0": 10,
+            "1": 20,
+            "2": 23,
+            "5": 35
+          },
+          "internal": {
+            "total_calls": 87,
+            "avg_total_ms": 22.849418360611487,
+            "avg_source_ms": 1.0778118646007848,
+            "avg_scheduler_ms": 1.5699935601622763,
+            "avg_refine_ms": 20.201612880999416
+          }
+        },
+        {
+          "seed": 100011,
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_nfe": 1.4659090909090908,
+          "latency_external_ms": 14.80086344754559,
+          "latency_external_all_ms": 14.85509812747213,
+          "n_calls": 88,
+          "k_counts": {
+            "0": 18,
+            "1": 20,
+            "2": 47,
+            "5": 3
+          },
+          "internal": {
+            "total_calls": 87,
+            "avg_total_ms": 14.143971295192324,
+            "avg_source_ms": 1.0474843211557672,
+            "avg_scheduler_ms": 1.5287113565611705,
+            "avg_refine_ms": 11.567775657269355
+          }
+        },
+        {
+          "seed": 100012,
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_nfe": 1.8636363636363635,
+          "latency_external_ms": 18.016056821349707,
+          "latency_external_all_ms": 17.949149636975065,
+          "n_calls": 88,
+          "k_counts": {
+            "1": 36,
+            "2": 44,
+            "5": 8
+          },
+          "internal": {
+            "total_calls": 87,
+            "avg_total_ms": 17.38510796119427,
+            "avg_source_ms": 1.0997914493769065,
+            "avg_scheduler_ms": 1.50280717314601,
+            "avg_refine_ms": 14.782509217317076
+          }
+        },
+        {
+          "seed": 100013,
+          "success": 0.0,
+          "reward": 0.0,
+          "avg_nfe": 4.5227272727272725,
+          "latency_external_ms": 35.73665393238095,
+          "latency_external_all_ms": 35.77580475460061,
+          "n_calls": 88,
+          "k_counts": {
+            "1": 9,
+            "2": 2,
+            "5": 77
+          },
+          "internal": {
+            "total_calls": 87,
+            "avg_total_ms": 35.09827064645702,
+            "avg_source_ms": 1.1164825729940129,
+            "avg_scheduler_ms": 1.5856062461589946,
+            "avg_refine_ms": 32.396181802640015
+          }
+        },
+        {
+          "seed": 100014,
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_nfe": 1.0454545454545454,
+          "latency_external_ms": 12.177514533201853,
+          "latency_external_all_ms": 12.082031060179526,
+          "n_calls": 88,
+          "k_counts": {
+            "0": 21,
+            "1": 42,
+            "2": 25
+          },
+          "internal": {
+            "total_calls": 87,
+            "avg_total_ms": 11.492788179167384,
+            "avg_source_ms": 1.1760176564085072,
+            "avg_scheduler_ms": 1.4697647839704333,
+            "avg_refine_ms": 8.847005826189589
+          }
+        },
+        {
+          "seed": 100015,
+          "success": 0.0,
+          "reward": 0.0,
+          "avg_nfe": 0.5795454545454546,
+          "latency_external_ms": 7.840385103876564,
+          "latency_external_all_ms": 7.963235204277391,
+          "n_calls": 88,
+          "k_counts": {
+            "0": 70,
+            "1": 6,
+            "2": 5,
+            "5": 7
+          },
+          "internal": {
+            "total_calls": 87,
+            "avg_total_ms": 7.176146362019684,
+            "avg_source_ms": 1.0688400919410002,
+            "avg_scheduler_ms": 1.4914081827028194,
+            "avg_refine_ms": 4.615898143372968
+          }
+        },
+        {
+          "seed": 100016,
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_nfe": 1.3409090909090908,
+          "latency_external_ms": 14.068736031052024,
+          "latency_external_all_ms": 13.939824992452156,
+          "n_calls": 88,
+          "k_counts": {
+            "0": 11,
+            "1": 39,
+            "2": 37,
+            "5": 1
+          },
+          "internal": {
+            "total_calls": 87,
+            "avg_total_ms": 13.483761986096699,
+            "avg_source_ms": 1.0545441837146365,
+            "avg_scheduler_ms": 1.4818802726730682,
+            "avg_refine_ms": 10.947337614875499
+          }
+        },
+        {
+          "seed": 100017,
+          "success": 0.0,
+          "reward": 0.0,
+          "avg_nfe": 3.522727272727273,
+          "latency_external_ms": 28.998466636771443,
+          "latency_external_all_ms": 28.700895808552477,
+          "n_calls": 88,
+          "k_counts": {
+            "0": 7,
+            "1": 8,
+            "2": 21,
+            "5": 52
+          },
+          "internal": {
+            "total_calls": 87,
+            "avg_total_ms": 28.33645750462324,
+            "avg_source_ms": 1.0598944363922909,
+            "avg_scheduler_ms": 1.4857129214275309,
+            "avg_refine_ms": 25.790850045686675
+          }
+        },
+        {
+          "seed": 100018,
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_nfe": 1.4431818181818181,
+          "latency_external_ms": 15.121624344724347,
+          "latency_external_all_ms": 14.996808689002963,
+          "n_calls": 88,
+          "k_counts": {
+            "0": 7,
+            "1": 35,
+            "2": 46
+          },
+          "internal": {
+            "total_calls": 87,
+            "avg_total_ms": 14.457361613196891,
+            "avg_source_ms": 1.0718867107369432,
+            "avg_scheduler_ms": 1.5087345322920547,
+            "avg_refine_ms": 11.87674044885796
+          }
+        },
+        {
+          "seed": 100019,
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_nfe": 1.7159090909090908,
+          "latency_external_ms": 16.66199449107222,
+          "latency_external_all_ms": 16.516453015025366,
+          "n_calls": 88,
+          "k_counts": {
+            "0": 20,
+            "1": 18,
+            "2": 39,
+            "5": 11
+          },
+          "internal": {
+            "total_calls": 87,
+            "avg_total_ms": 16.032427741193224,
+            "avg_source_ms": 1.0871212852412253,
+            "avg_scheduler_ms": 1.5670797207363314,
+            "avg_refine_ms": 13.378226845629579
+          }
+        }
+      ]
+    }
+  }
+}

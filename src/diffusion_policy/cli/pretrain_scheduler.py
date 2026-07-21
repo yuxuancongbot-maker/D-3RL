@@ -72,7 +72,15 @@ def load_policy_config(ckpt_path: str):
     return payload['cfg']
 
 
-def create_scheduler(cfg, device, obs_dim=None, action_dim=None, horizon=None, n_obs_steps=None):
+def create_scheduler(
+    cfg,
+    device,
+    obs_dim=None,
+    action_dim=None,
+    horizon=None,
+    n_obs_steps=None,
+    refinement_steps=None,
+):
     """创建 Scheduler"""
     policy_cfg = cfg.policy if cfg is not None and 'policy' in cfg else cfg
     scheduler = AdaScheduler(
@@ -82,7 +90,7 @@ def create_scheduler(cfg, device, obs_dim=None, action_dim=None, horizon=None, n
         n_obs_steps=n_obs_steps or policy_cfg.n_obs_steps,
         hidden_dim=256,
         num_layers=2,
-        refinement_steps=[0, 1, 2, 5],
+        refinement_steps=refinement_steps or [0, 1, 2, 5],
     )
     scheduler.to(device)
     return scheduler
@@ -133,10 +141,10 @@ def evaluate(scheduler, dataloader, device):
     total_loss = 0
     correct = 0
     total = 0
-    
+
     # 每个类别的统计
-    class_correct = {0: 0, 1: 0, 2: 0, 3: 0}
-    class_total = {0: 0, 1: 0, 2: 0, 3: 0}
+    class_correct = {i: 0 for i in range(scheduler.num_actions)}
+    class_total = {i: 0 for i in range(scheduler.num_actions)}
     
     with torch.no_grad():
         for batch in dataloader:
@@ -153,14 +161,14 @@ def evaluate(scheduler, dataloader, device):
             total += labels.size(0)
             
             # 每个类别的统计
-            for i in range(4):
+            for i in range(scheduler.num_actions):
                 mask = labels == i
                 class_total[i] += mask.sum().item()
                 class_correct[i] += ((pred == labels) & mask).sum().item()
-    
+
     # 计算每个类别的准确率
     class_acc = {}
-    for i in range(4):
+    for i in range(scheduler.num_actions):
         if class_total[i] > 0:
             class_acc[i] = class_correct[i] / class_total[i]
         else:
@@ -193,9 +201,9 @@ def main():
                         help='Action horizon; inferred from oracle init_action when omitted')
     parser.add_argument('--n_obs_steps', type=int, default=None,
                         help='Observation steps; inferred from oracle obs when omitted')
-    parser.add_argument('--obs_mode', type=str, default='lowdim',
+    parser.add_argument('--obs_mode', type=str, default=None,
                         choices=['lowdim', 'image_feature'],
-                        help='Metadata marker saved in scheduler checkpoint')
+                        help='Metadata marker saved in scheduler checkpoint; inferred from oracle data when omitted')
     args = parser.parse_args()
     
     device = args.device
@@ -220,6 +228,12 @@ def main():
         tensor_data = data
         n_total = len(data['label'])
         print(f"样本数量: {n_total} (tensor 格式)")
+
+    config = data.get('config', {})
+    refinement_steps = list(config.get('refinement_steps', [0, 1, 2, 5]))
+    checkpoint_obs_mode = args.obs_mode or config.get('obs_mode', 'lowdim')
+    print(f"精炼步数选项: {refinement_steps}")
+    print(f"obs_mode: {checkpoint_obs_mode}")
 
     # 分割训练/验证集
     n_val = int(n_total * args.val_split)
@@ -267,6 +281,7 @@ def main():
         action_dim=action_dim,
         horizon=horizon,
         n_obs_steps=n_obs_steps,
+        refinement_steps=refinement_steps,
     )
     
     # 重置初始偏置（移除原来的偏向 k=0 的设置）
@@ -327,8 +342,11 @@ def main():
         print(f"\nEpoch {epoch}/{args.epochs}")
         print(f"  Train Loss: {train_loss:.4f}, Acc: {train_acc:.2%}")
         print(f"  Val   Loss: {val_loss:.4f}, Acc: {val_acc:.2%}")
-        print(f"  Class Acc: k=0: {class_acc[0]:.2%}, k=2: {class_acc.get(1, 0):.2%}, "
-              f"k=5: {class_acc.get(2, 0):.2%}, k=10: {class_acc.get(3, 0):.2%}")
+        class_acc_text = ", ".join(
+            f"k={k}: {class_acc.get(i, 0):.2%}"
+            for i, k in enumerate(refinement_steps)
+        )
+        print(f"  Class Acc: {class_acc_text}")
         
         # 保存最佳模型
         if val_acc > best_val_acc:
@@ -345,8 +363,8 @@ def main():
                     'action_dim': action_dim,
                     'horizon': horizon,
                     'n_obs_steps': n_obs_steps,
-                    'obs_mode': args.obs_mode,
-                    'refinement_steps': [0, 1, 2, 5],
+                    'obs_mode': checkpoint_obs_mode,
+                    'refinement_steps': refinement_steps,
                 }
             }, os.path.join(args.output_dir, 'scheduler_best.pt'))
             print(f"  [保存最佳模型: val_acc={val_acc:.2%}]")
@@ -362,8 +380,8 @@ def main():
             'action_dim': action_dim,
             'horizon': horizon,
             'n_obs_steps': n_obs_steps,
-            'obs_mode': args.obs_mode,
-            'refinement_steps': [0, 1, 2, 5],
+            'obs_mode': checkpoint_obs_mode,
+            'refinement_steps': refinement_steps,
         }
     }, os.path.join(args.output_dir, 'scheduler_final.pt'))
     

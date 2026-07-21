@@ -1,11 +1,11 @@
 # Ada-BRIDGER PushT — 4-way {0,1,2,5} + K5-bias PPO
-name: train_ada_bridger_pusht_4way
+name: train_ada_bridger_pusht_4way_pegrad
 _target_: diffusion_policy.workspace.train_ada_bridger_workspace.TrainAdaBridgerWorkspace
 
 obs_dim: ${task.obs_dim}
 action_dim: ${task.action_dim}
 task_name: ${task.name}
-exp_name: "ada_bridger_4way"
+exp_name: "ada_bridger_4way_pegrad"
 
 horizon: 16
 n_obs_steps: 2
@@ -32,11 +32,11 @@ pegrad:
   clip_grad_norm: 0.5
 
 stage4:
-  mode: lightweight_ppo
+  mode: ppo_pegrad
   reward:
     cost_type: refinement_steps
-    cost_coef_target: 0.02      # 轻量 cost，不压太狠
-    task_only_epochs: 20        # 先专注任务
+    cost_coef_target: 0.05      # 轻量 cost，不压太狠
+    task_only_epochs: 10        # 先专注任务
     cost_warmup_epochs: 50
   regularization:
     kl_to_pretrained: false
@@ -75,7 +75,7 @@ training:
   tqdm_interval_sec: 1.0
 
 logging:
-  project: ada_bridger_4way
+  project: ada_bridger_4way_pegrad
   resume: True
   mode: online
   name: ${now:%Y.%m.%d-%H.%M.%S}_${name}_${task_name}

@@ -335,10 +335,18 @@ class AdaBridgerPolicy(nn.Module):
             refine_time = t_refine - t_scheduler
             total_time = t_refine - t_start
 
-        # 4) 截取执行部分，保护 NaN/Inf/极端值防止 MuJoCo 崩溃
+        # 4) 截取执行部分，保护 NaN/Inf/极端值防止环境崩溃。
+        # 不要硬编码 clamp 到 [-5, 5]：PushT 的动作是 0~512 像素坐标。
         action = refined_action[:, :self.n_action_steps]
-        action = torch.nan_to_num(action, nan=0.0, posinf=2.0, neginf=-2.0)
-        action = torch.clamp(action, -5.0, 5.0)
+        action = torch.nan_to_num(action, nan=0.0, posinf=1e6, neginf=-1e6)
+        try:
+            action_stats = self._normalizer['action'].get_input_stats()
+            action_min = action_stats['min'].to(device=action.device, dtype=action.dtype)
+            action_max = action_stats['max'].to(device=action.device, dtype=action.dtype)
+            view_shape = [1] * (action.ndim - 1) + [-1]
+            action = torch.max(torch.min(action, action_max.view(*view_shape)), action_min.view(*view_shape))
+        except Exception:
+            action = torch.clamp(action, -5.0, 5.0)
 
         # 保存 refined action 供下一步 feedback
         self._last_refined_action = refined_action.detach().clone()
@@ -361,11 +369,14 @@ class AdaBridgerPolicy(nn.Module):
         if return_intermediate:
             result.update({
                 'init_action': init_action,
+                'refined_action': refined_action,
                 'refinement_steps': steps,
                 'scheduler_action_idx': action_idx,
                 'scheduler_log_prob': log_prob,
                 'scheduler_value': value,
             })
+            if 'obs_feat' in source_result:
+                result['obs_feat'] = source_result['obs_feat']
 
         return result
 
@@ -439,8 +450,8 @@ class AdaBridgerPolicy(nn.Module):
         for t in ddim_scheduler.timesteps:
             trajectory[condition_mask] = condition_data[condition_mask]
             model_output = model(
-                trajectory,
-                t,
+                sample=trajectory,
+                timestep=t,
                 local_cond=local_cond,
                 global_cond=global_cond,
             )

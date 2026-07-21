@@ -166,6 +166,14 @@ class TrainAdaBridgerWorkspace(BaseWorkspace):
                 f"不在 scheduler.refinement_steps={refinement_steps} 中"
             )
 
+        inferred_obs_dim = None
+        if hasattr(source_policy, 'obs_feature_dim'):
+            inferred_obs_dim = int(source_policy.obs_feature_dim)
+        elif hasattr(source_policy, 'encode_obs') and hasattr(source_policy, 'encoder'):
+            inferred_obs_dim = int(source_policy.encoder.output_shape()[0])
+        elif hasattr(refinement_policy, 'obs_encoder'):
+            inferred_obs_dim = int(refinement_policy.obs_encoder.output_shape()[0])
+
         if cfg.scheduler.get('_target_', None) is not None:
             scheduler_kwargs = {
                 'action_dim': cfg.action_dim,
@@ -173,25 +181,20 @@ class TrainAdaBridgerWorkspace(BaseWorkspace):
                 'n_obs_steps': cfg.n_obs_steps,
                 'refinement_steps': refinement_steps,
             }
-            if cfg.scheduler.get('obs_feature_dim', None) is None:
-                inferred_dim = None
-                if hasattr(source_policy, 'encode_obs') and hasattr(source_policy, 'encoder'):
-                    inferred_dim = source_policy.encoder.output_shape()[0]
-                    model_obs_dim = getattr(getattr(source_policy, 'model', None), 'obs_dim', None)
-                    if model_obs_dim is not None:
-                        inferred_dim = model_obs_dim
-                if inferred_dim is None and hasattr(refinement_policy, 'obs_encoder'):
-                    inferred_dim = refinement_policy.obs_encoder.output_shape()[0]
-                if inferred_dim is not None:
-                    scheduler_kwargs['obs_feature_dim'] = inferred_dim
-                    print(f"  Inferred image scheduler obs_feature_dim={inferred_dim}")
+            if cfg.scheduler.get('obs_feature_dim', None) is None and inferred_obs_dim is not None:
+                scheduler_kwargs['obs_feature_dim'] = inferred_obs_dim
+                print(f"  Inferred image scheduler obs_feature_dim={inferred_obs_dim}")
             scheduler = hydra.utils.instantiate(
                 cfg.scheduler,
                 **scheduler_kwargs,
             )
         else:
+            scheduler_obs_dim = int(cfg.obs_dim)
+            if scheduler_obs_dim <= 0 and inferred_obs_dim is not None:
+                scheduler_obs_dim = inferred_obs_dim
+                print(f"  Inferred scheduler obs_dim={scheduler_obs_dim}")
             scheduler = AdaScheduler(
-                obs_dim=cfg.obs_dim,
+                obs_dim=scheduler_obs_dim,
                 action_dim=cfg.action_dim,
                 action_horizon=cfg.horizon,
                 n_obs_steps=cfg.n_obs_steps,
@@ -408,12 +411,19 @@ class TrainAdaBridgerWorkspace(BaseWorkspace):
         cfg = copy.deepcopy(self.cfg)
         
         # 恢复训练
+        start_epoch = 0
         if cfg.training.resume:
             latest_ckpt_path = self.get_checkpoint_path()
             if latest_ckpt_path.is_file():
                 print(f"Resuming from checkpoint {latest_ckpt_path}")
                 self.load_checkpoint(path=latest_ckpt_path)
-        
+                # Checkpoints are saved before epoch/global_step are incremented
+                # at the end of the loop, so resume from the next epoch and keep
+                # warmup schedules/checkpoint cadence aligned with the original run.
+                start_epoch = int(self.epoch) + 1
+                self.epoch = start_epoch
+                self.global_step = max(int(self.global_step) + 1, start_epoch)
+
         # ========== 配置环境 ==========
         env_runner = hydra.utils.instantiate(
             cfg.task.env_runner,
@@ -444,11 +454,13 @@ class TrainAdaBridgerWorkspace(BaseWorkspace):
         # 设备
         device = torch.device(cfg.training.device)
         self.policy.to(device)
-        
+        if self._frozen_pretrained_scheduler is not None:
+            self._frozen_pretrained_scheduler.to(device)
+
         # ========== RL 训练循环 ==========
         log_path = os.path.join(self.output_dir, 'logs.json.txt')
         with JsonLogger(log_path) as json_logger:
-            for epoch_idx in range(cfg.training.num_epochs):
+            for epoch_idx in range(start_epoch, cfg.training.num_epochs):
                 step_log = dict()
 
                 # ----- Cost warmup: 计算当前 λ_cost -----
@@ -512,6 +524,7 @@ class TrainAdaBridgerWorkspace(BaseWorkspace):
                         advantages=advantages,
                         returns=returns,
                         cfg=cfg,
+                        lambda_cost=lambda_cost,
                     )
 
                     step_log.update({
@@ -520,6 +533,10 @@ class TrainAdaBridgerWorkspace(BaseWorkspace):
                         'train/entropy': update_info['entropy'],
                         'train/conflict_ratio': update_info['conflict_ratio'],
                     })
+                    if 'kl_loss' in update_info:
+                        step_log['train/kl_loss'] = update_info['kl_loss']
+                    if 'cost_weight' in update_info:
+                        step_log['train/effective_cost_weight'] = update_info['cost_weight']
 
                 # ========== 评估 + Success Guard ==========
                 if (epoch_idx + 1) % cfg.training.eval_every == 0:
@@ -564,10 +581,16 @@ class TrainAdaBridgerWorkspace(BaseWorkspace):
                 self.epoch += 1
                 
                 # 打印进度
-                print(f"Epoch {epoch_idx+1}/{cfg.training.num_epochs} | "
-                      f"Reward: {step_log.get('train/mean_reward', 0):.3f} | "
-                      f"Success: {step_log.get('train/mean_success', 0):.3f} | "
-                      f"Avg Steps: {step_log.get('train/mean_steps', 0):.2f}")
+                msg = (f"Epoch {epoch_idx+1}/{cfg.training.num_epochs} | "
+                       f"Reward: {step_log.get('train/mean_reward', 0):.3f} | "
+                       f"Success: {step_log.get('train/mean_success', 0):.3f} | "
+                       f"Avg Steps: {step_log.get('train/mean_steps', 0):.2f}")
+                if 'test/mean_score' in step_log:
+                    msg += (f" | Test Score: {step_log.get('test/mean_score', 0):.3f}"
+                            f" | Eval Steps: {step_log.get('eval/avg_refinement_steps', 0):.2f}")
+                if 'train/effective_cost_weight' in step_log:
+                    msg += f" | CostW: {step_log.get('train/effective_cost_weight', 0):.4f}"
+                print(msg)
     
     def _collect_rollouts(
         self,
@@ -596,14 +619,20 @@ class TrainAdaBridgerWorkspace(BaseWorkspace):
         for rollout_idx in range(n_rollouts):
             self.policy.reset()
             
-            # 初始化环境（可能因上次 MuJoCo 崩溃而失败 → 跳过该 rollout）
-            init_fn_dill = env_runner.env_init_fn_dills[rollout_idx % len(env_runner.env_init_fn_dills)]
+            # 初始化环境（可能因上次 MuJoCo 崩溃而失败 → 跳过该 rollout）。
+            # 每个并行 env 必须使用不同 init_fn/seed；否则一个 rollout 内会重复同一 seed，
+            # PPO 很容易 overfit 少数初始状态并造成 train/eval mismatch。
+            start = (rollout_idx * n_envs) % len(env_runner.env_init_fn_dills)
+            init_fn_dills = [
+                env_runner.env_init_fn_dills[(start + i) % len(env_runner.env_init_fn_dills)]
+                for i in range(n_envs)
+            ]
             try:
-                env.call_each('run_dill_function', args_list=[(init_fn_dill,)] * n_envs)
+                env.call_each('run_dill_function', args_list=[(x,) for x in init_fn_dills])
             except Exception:
                 try:
                     env.reset()
-                    env.call_each('run_dill_function', args_list=[(init_fn_dill,)] * n_envs)
+                    env.call_each('run_dill_function', args_list=[(x,) for x in init_fn_dills])
                 except Exception:
                     print(f"  [WARN] Rollout {rollout_idx} recovery failed, skipping")
                     continue
@@ -636,12 +665,12 @@ class TrainAdaBridgerWorkspace(BaseWorkspace):
                     np_obs_dict['past_action'] = past_action_for_policy.astype(np.float32)
                 obs_dict = dict_apply(np_obs_dict,
                     lambda x: torch.from_numpy(x).to(device=device))
-                scheduler_obs = self.policy._get_scheduler_obs(obs_dict)
 
                 # 使用返回中间结果的方式调用策略
                 with torch.no_grad():
                     result = self.policy.predict_action(obs_dict, return_intermediate=True)
-                
+                scheduler_obs = self.policy._get_scheduler_obs(obs_dict, result)
+
                 # 提取数据
                 action = result['action']
                 init_action = result['init_action']
@@ -780,7 +809,7 @@ class TrainAdaBridgerWorkspace(BaseWorkspace):
     # ------------------------------------------------------------------
     # PPO update with optional KL regularization
     # ------------------------------------------------------------------
-    def _ppo_update(self, buffer_data, advantages, returns, cfg):
+    def _ppo_update(self, buffer_data, advantages, returns, cfg, lambda_cost: float = 0.0):
         """执行 PPO 更新，可选 KL 到 pretrained scheduler。"""
         if self._stage4_mode == 'lightweight_ppo':
             return self._ppo_update_lightweight(buffer_data, advantages, returns, cfg)
@@ -793,6 +822,9 @@ class TrainAdaBridgerWorkspace(BaseWorkspace):
                 advantages=advantages,
                 returns=returns,
                 refinement_steps=buffer_data['refinement_steps'],
+                cost_weight=lambda_cost,
+                frozen_scheduler=self._frozen_pretrained_scheduler,
+                kl_coef=self._kl_coef if self._kl_to_pretrained else 0.0,
             )
 
     def _ppo_update_lightweight(self, buffer_data, advantages, returns, cfg):

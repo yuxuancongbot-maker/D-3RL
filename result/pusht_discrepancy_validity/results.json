@@ -1,0 +1,2760 @@
+{
+  "task": "PushT lowdim",
+  "analysis": "strict initial-state paired rollout validity",
+  "checkpoint": "/inspire/hdd/project/inference-chip/lijinhao-240108540148/research_yuxuancong/icml_and_iros/d3rl_diffusion_policy/outputs/train/checkpoints/latest.ckpt",
+  "seed_start": 100000,
+  "n_episodes": 150,
+  "strong_k": 5,
+  "summary": {
+    "n": 150,
+    "spearman_discrepancy_reward_gain": 0.12427207261110496,
+    "spearman_discrepancy_success_gain": 0.18803014580479968,
+    "discrepancy_mean": 25.754146919250488,
+    "discrepancy_std": 15.135001482914879,
+    "reward_gain_mean": 0.29031171480865403,
+    "reward_gain_std": 0.4020289253982947,
+    "success_gain_mean": 0.28,
+    "success_gain_std": 0.530659966456864,
+    "k0_success_mean": 0.4666666666666667,
+    "k5_success_mean": 0.7466666666666667,
+    "k0_reward_mean": 0.44940802635404525,
+    "k5_reward_mean": 0.7397197411626993,
+    "bins": {
+      "low": {
+        "name": "low",
+        "n": 50,
+        "discrepancy_mean": 12.251851272583007,
+        "reward_gain_mean": 0.21409244837180894,
+        "success_gain_mean": 0.16,
+        "k0_success_mean": 0.58,
+        "k5_success_mean": 0.74,
+        "k0_reward_mean": 0.5293583573928925,
+        "k5_reward_mean": 0.7434508057647014
+      },
+      "mid": {
+        "name": "mid",
+        "n": 50,
+        "discrepancy_mean": 22.841051445007324,
+        "reward_gain_mean": 0.30614746275238613,
+        "success_gain_mean": 0.3,
+        "k0_success_mean": 0.44,
+        "k5_success_mean": 0.74,
+        "k0_reward_mean": 0.4253806357694225,
+        "k5_reward_mean": 0.7315280985218086
+      },
+      "high": {
+        "name": "high",
+        "n": 50,
+        "discrepancy_mean": 42.169538040161136,
+        "reward_gain_mean": 0.350695233301767,
+        "success_gain_mean": 0.38,
+        "k0_success_mean": 0.38,
+        "k5_success_mean": 0.76,
+        "k0_reward_mean": 0.3934850858998209,
+        "k5_reward_mean": 0.7441803192015878
+      }
+    }
+  },
+  "rows": [
+    {
+      "seed": 100000,
+      "discrepancy": 12.169942855834961,
+      "k0": {
+        "reward": 0.0,
+        "success": 0.0,
+        "latency_ms": 2.868498969627054,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.9602178516705743,
+        "success": 1.0,
+        "latency_ms": 36.17987080820297,
+        "n_calls": 38
+      },
+      "reward_gain": 0.9602178516705743,
+      "success_gain": 1.0
+    },
+    {
+      "seed": 100001,
+      "discrepancy": 17.685260772705078,
+      "k0": {
+        "reward": 0.9694754310303056,
+        "success": 1.0,
+        "latency_ms": 1.710362095189722,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 1.0,
+        "success": 1.0,
+        "latency_ms": 39.63440876188023,
+        "n_calls": 14
+      },
+      "reward_gain": 0.030524568969694355,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100002,
+      "discrepancy": 14.17859935760498,
+      "k0": {
+        "reward": 0.5571150339892168,
+        "success": 1.0,
+        "latency_ms": 1.8106827169264619,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 1.0,
+        "success": 1.0,
+        "latency_ms": 39.904317051610526,
+        "n_calls": 17
+      },
+      "reward_gain": 0.4428849660107832,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100003,
+      "discrepancy": 21.30559539794922,
+      "k0": {
+        "reward": 0.0,
+        "success": 0.0,
+        "latency_ms": 2.116079981389799,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.9901383488297597,
+        "success": 1.0,
+        "latency_ms": 38.03338916776212,
+        "n_calls": 38
+      },
+      "reward_gain": 0.9901383488297597,
+      "success_gain": 1.0
+    },
+    {
+      "seed": 100004,
+      "discrepancy": 16.970458984375,
+      "k0": {
+        "reward": 0.37704880523555223,
+        "success": 0.0,
+        "latency_ms": 1.668802854654036,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 1.0,
+        "success": 1.0,
+        "latency_ms": 37.6600076311401,
+        "n_calls": 21
+      },
+      "reward_gain": 0.6229511947644477,
+      "success_gain": 1.0
+    },
+    {
+      "seed": 100005,
+      "discrepancy": 23.81085205078125,
+      "k0": {
+        "reward": 0.037299398061045284,
+        "success": 0.0,
+        "latency_ms": 3.0179165401741077,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.961861231911768,
+        "success": 1.0,
+        "latency_ms": 37.86484544214449,
+        "n_calls": 38
+      },
+      "reward_gain": 0.9245618338507227,
+      "success_gain": 1.0
+    },
+    {
+      "seed": 100006,
+      "discrepancy": 27.015432357788086,
+      "k0": {
+        "reward": 0.15934172046779105,
+        "success": 0.0,
+        "latency_ms": 4.432907720145426,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.9740669589108538,
+        "success": 1.0,
+        "latency_ms": 38.60360072729619,
+        "n_calls": 38
+      },
+      "reward_gain": 0.8147252384430628,
+      "success_gain": 1.0
+    },
+    {
+      "seed": 100007,
+      "discrepancy": 45.40574645996094,
+      "k0": {
+        "reward": 0.2024511806024556,
+        "success": 0.0,
+        "latency_ms": 1.9482426639450223,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.9780939697943596,
+        "success": 1.0,
+        "latency_ms": 34.75061429076289,
+        "n_calls": 38
+      },
+      "reward_gain": 0.775642789191904,
+      "success_gain": 1.0
+    },
+    {
+      "seed": 100008,
+      "discrepancy": 28.831762313842773,
+      "k0": {
+        "reward": 1.0,
+        "success": 1.0,
+        "latency_ms": 3.159244898064383,
+        "n_calls": 29
+      },
+      "k5": {
+        "reward": 0.9803223341966899,
+        "success": 1.0,
+        "latency_ms": 34.19853180744931,
+        "n_calls": 38
+      },
+      "reward_gain": -0.019677665803310096,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100009,
+      "discrepancy": 20.788785934448242,
+      "k0": {
+        "reward": 0.8862254154733964,
+        "success": 1.0,
+        "latency_ms": 1.6358314621213235,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 1.0,
+        "success": 1.0,
+        "latency_ms": 34.417418896087575,
+        "n_calls": 28
+      },
+      "reward_gain": 0.1137745845266036,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100010,
+      "discrepancy": 5.247458457946777,
+      "k0": {
+        "reward": 0.7363960485961061,
+        "success": 1.0,
+        "latency_ms": 1.6577894505309432,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.9153592536226425,
+        "success": 1.0,
+        "latency_ms": 36.47830273563925,
+        "n_calls": 38
+      },
+      "reward_gain": 0.1789632050265364,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100011,
+      "discrepancy": 15.009845733642578,
+      "k0": {
+        "reward": 0.024821242845735565,
+        "success": 0.0,
+        "latency_ms": 1.637929903441354,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 1.0,
+        "success": 1.0,
+        "latency_ms": 37.679498773758056,
+        "n_calls": 27
+      },
+      "reward_gain": 0.9751787571542644,
+      "success_gain": 1.0
+    },
+    {
+      "seed": 100012,
+      "discrepancy": 28.22966766357422,
+      "k0": {
+        "reward": 0.0,
+        "success": 0.0,
+        "latency_ms": 1.526340646179099,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.0,
+        "success": 0.0,
+        "latency_ms": 35.656038157053686,
+        "n_calls": 38
+      },
+      "reward_gain": 0.0,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100013,
+      "discrepancy": 24.50945281982422,
+      "k0": {
+        "reward": 0.35160657465446554,
+        "success": 0.0,
+        "latency_ms": 2.9931925482263693,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.7110897213909669,
+        "success": 1.0,
+        "latency_ms": 36.92715629739197,
+        "n_calls": 38
+      },
+      "reward_gain": 0.3594831467365014,
+      "success_gain": 1.0
+    },
+    {
+      "seed": 100014,
+      "discrepancy": 28.101572036743164,
+      "k0": {
+        "reward": 0.5833511732551185,
+        "success": 1.0,
+        "latency_ms": 1.6435941583231877,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 1.0,
+        "success": 1.0,
+        "latency_ms": 34.18816909517931,
+        "n_calls": 23
+      },
+      "reward_gain": 0.41664882674488146,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100015,
+      "discrepancy": 22.38119888305664,
+      "k0": {
+        "reward": 0.2343609408295954,
+        "success": 0.0,
+        "latency_ms": 1.6393763944506645,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.9987901258960701,
+        "success": 1.0,
+        "latency_ms": 34.26757437716189,
+        "n_calls": 38
+      },
+      "reward_gain": 0.7644291850664746,
+      "success_gain": 1.0
+    },
+    {
+      "seed": 100016,
+      "discrepancy": 9.620447158813477,
+      "k0": {
+        "reward": 1.0,
+        "success": 1.0,
+        "latency_ms": 1.7578850007232498,
+        "n_calls": 34
+      },
+      "k5": {
+        "reward": 0.9787371026575908,
+        "success": 1.0,
+        "latency_ms": 36.63403207534238,
+        "n_calls": 38
+      },
+      "reward_gain": -0.02126289734240916,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100017,
+      "discrepancy": 23.96364974975586,
+      "k0": {
+        "reward": 0.8351869419738217,
+        "success": 1.0,
+        "latency_ms": 1.859438213470735,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 1.0,
+        "success": 1.0,
+        "latency_ms": 35.868618336013135,
+        "n_calls": 34
+      },
+      "reward_gain": 0.1648130580261783,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100018,
+      "discrepancy": 10.518653869628906,
+      "k0": {
+        "reward": 0.5153689086974123,
+        "success": 1.0,
+        "latency_ms": 2.805321918506371,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.9707042464299976,
+        "success": 1.0,
+        "latency_ms": 36.84591864676852,
+        "n_calls": 38
+      },
+      "reward_gain": 0.4553353377325854,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100019,
+      "discrepancy": 41.44508361816406,
+      "k0": {
+        "reward": 0.41467070997965844,
+        "success": 0.0,
+        "latency_ms": 1.5057216790553771,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 1.0,
+        "success": 1.0,
+        "latency_ms": 34.31899786961299,
+        "n_calls": 27
+      },
+      "reward_gain": 0.5853292900203415,
+      "success_gain": 1.0
+    },
+    {
+      "seed": 100020,
+      "discrepancy": 11.908321380615234,
+      "k0": {
+        "reward": 0.0,
+        "success": 0.0,
+        "latency_ms": 1.5983972698450089,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.0,
+        "success": 0.0,
+        "latency_ms": 37.13932317240458,
+        "n_calls": 38
+      },
+      "reward_gain": 0.0,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100021,
+      "discrepancy": 44.88029098510742,
+      "k0": {
+        "reward": 0.12396814658172545,
+        "success": 0.0,
+        "latency_ms": 2.044618963018844,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 1.0,
+        "success": 1.0,
+        "latency_ms": 37.32311595795733,
+        "n_calls": 33
+      },
+      "reward_gain": 0.8760318534182745,
+      "success_gain": 1.0
+    },
+    {
+      "seed": 100022,
+      "discrepancy": 8.254371643066406,
+      "k0": {
+        "reward": 0.6753455230800401,
+        "success": 1.0,
+        "latency_ms": 1.7875736873400838,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 1.0,
+        "success": 1.0,
+        "latency_ms": 37.04063073382713,
+        "n_calls": 32
+      },
+      "reward_gain": 0.32465447691995986,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100023,
+      "discrepancy": 41.27053451538086,
+      "k0": {
+        "reward": 0.0,
+        "success": 0.0,
+        "latency_ms": 1.7517497763037682,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.0,
+        "success": 0.0,
+        "latency_ms": 37.57406937840738,
+        "n_calls": 38
+      },
+      "reward_gain": 0.0,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100024,
+      "discrepancy": 33.6068000793457,
+      "k0": {
+        "reward": 0.8792094774474858,
+        "success": 1.0,
+        "latency_ms": 1.60090446374134,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.9282944173759821,
+        "success": 1.0,
+        "latency_ms": 38.09064773744658,
+        "n_calls": 38
+      },
+      "reward_gain": 0.049084939928496274,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100025,
+      "discrepancy": 23.20166015625,
+      "k0": {
+        "reward": 0.0,
+        "success": 0.0,
+        "latency_ms": 3.3425091716804003,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.0,
+        "success": 0.0,
+        "latency_ms": 36.25774807541778,
+        "n_calls": 38
+      },
+      "reward_gain": 0.0,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100026,
+      "discrepancy": 8.868186950683594,
+      "k0": {
+        "reward": 0.6381700065069759,
+        "success": 1.0,
+        "latency_ms": 1.7299954044191461,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.9706354008209003,
+        "success": 1.0,
+        "latency_ms": 37.55598917211357,
+        "n_calls": 38
+      },
+      "reward_gain": 0.3324653943139244,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100027,
+      "discrepancy": 37.761131286621094,
+      "k0": {
+        "reward": 0.5376656657225439,
+        "success": 1.0,
+        "latency_ms": 3.0548820076020142,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.0,
+        "success": 0.0,
+        "latency_ms": 36.931190737768226,
+        "n_calls": 38
+      },
+      "reward_gain": -0.5376656657225439,
+      "success_gain": -1.0
+    },
+    {
+      "seed": 100028,
+      "discrepancy": 12.347068786621094,
+      "k0": {
+        "reward": 0.7256362743744526,
+        "success": 1.0,
+        "latency_ms": 1.7842768299344338,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.0,
+        "success": 0.0,
+        "latency_ms": 36.59485657944491,
+        "n_calls": 38
+      },
+      "reward_gain": -0.7256362743744526,
+      "success_gain": -1.0
+    },
+    {
+      "seed": 100029,
+      "discrepancy": 26.63001251220703,
+      "k0": {
+        "reward": 0.6274202534102972,
+        "success": 1.0,
+        "latency_ms": 1.704184926654163,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.9828570468455137,
+        "success": 1.0,
+        "latency_ms": 38.36057923342052,
+        "n_calls": 38
+      },
+      "reward_gain": 0.3554367934352165,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100030,
+      "discrepancy": 12.801252365112305,
+      "k0": {
+        "reward": 0.0,
+        "success": 0.0,
+        "latency_ms": 1.8934304335791814,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.7773391655336407,
+        "success": 1.0,
+        "latency_ms": 36.379994113782516,
+        "n_calls": 38
+      },
+      "reward_gain": 0.7773391655336407,
+      "success_gain": 1.0
+    },
+    {
+      "seed": 100031,
+      "discrepancy": 13.333012580871582,
+      "k0": {
+        "reward": 0.34752055928278724,
+        "success": 0.0,
+        "latency_ms": 1.886982813869652,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.9373638065809322,
+        "success": 1.0,
+        "latency_ms": 35.98732655671866,
+        "n_calls": 38
+      },
+      "reward_gain": 0.589843247298145,
+      "success_gain": 1.0
+    },
+    {
+      "seed": 100032,
+      "discrepancy": 21.360395431518555,
+      "k0": {
+        "reward": 0.9720321977492675,
+        "success": 1.0,
+        "latency_ms": 1.7384718613404977,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.9506024613066058,
+        "success": 1.0,
+        "latency_ms": 36.244496727656376,
+        "n_calls": 38
+      },
+      "reward_gain": -0.021429736442661773,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100033,
+      "discrepancy": 24.428451538085938,
+      "k0": {
+        "reward": 0.9834045811721404,
+        "success": 1.0,
+        "latency_ms": 1.7258251625064172,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.9785948536287384,
+        "success": 1.0,
+        "latency_ms": 37.03900409470263,
+        "n_calls": 38
+      },
+      "reward_gain": -0.0048097275434019204,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100034,
+      "discrepancy": 22.893169403076172,
+      "k0": {
+        "reward": 0.9679409171039222,
+        "success": 1.0,
+        "latency_ms": 1.7122382200077961,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 1.0,
+        "success": 1.0,
+        "latency_ms": 37.38715220242739,
+        "n_calls": 17
+      },
+      "reward_gain": 0.03205908289607784,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100035,
+      "discrepancy": 22.4785213470459,
+      "k0": {
+        "reward": 0.0,
+        "success": 0.0,
+        "latency_ms": 2.991245201739826,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.017980366516793772,
+        "success": 0.0,
+        "latency_ms": 36.229436432844714,
+        "n_calls": 38
+      },
+      "reward_gain": 0.017980366516793772,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100036,
+      "discrepancy": 20.641868591308594,
+      "k0": {
+        "reward": 0.687354644713479,
+        "success": 1.0,
+        "latency_ms": 1.9679001385444088,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.9190564857800471,
+        "success": 1.0,
+        "latency_ms": 35.40357341989875,
+        "n_calls": 38
+      },
+      "reward_gain": 0.2317018410665681,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100037,
+      "discrepancy": 24.88037109375,
+      "k0": {
+        "reward": 0.0,
+        "success": 0.0,
+        "latency_ms": 3.2168232443693436,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 1.0,
+        "success": 1.0,
+        "latency_ms": 37.29221881884668,
+        "n_calls": 36
+      },
+      "reward_gain": 1.0,
+      "success_gain": 1.0
+    },
+    {
+      "seed": 100038,
+      "discrepancy": 70.65367126464844,
+      "k0": {
+        "reward": 0.0,
+        "success": 0.0,
+        "latency_ms": 2.9224047535344173,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.836160917724076,
+        "success": 1.0,
+        "latency_ms": 37.14338726805229,
+        "n_calls": 38
+      },
+      "reward_gain": 0.836160917724076,
+      "success_gain": 1.0
+    },
+    {
+      "seed": 100039,
+      "discrepancy": 11.47966194152832,
+      "k0": {
+        "reward": 0.29784986370194594,
+        "success": 0.0,
+        "latency_ms": 1.8259710142094838,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.9812782532822444,
+        "success": 1.0,
+        "latency_ms": 35.67738451161667,
+        "n_calls": 38
+      },
+      "reward_gain": 0.6834283895802984,
+      "success_gain": 1.0
+    },
+    {
+      "seed": 100040,
+      "discrepancy": 17.110641479492188,
+      "k0": {
+        "reward": 0.9853902066656596,
+        "success": 1.0,
+        "latency_ms": 3.050833450336205,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.9338442196914649,
+        "success": 1.0,
+        "latency_ms": 37.092097079087246,
+        "n_calls": 38
+      },
+      "reward_gain": -0.05154598697419466,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100041,
+      "discrepancy": 34.539573669433594,
+      "k0": {
+        "reward": 0.8325493907174185,
+        "success": 1.0,
+        "latency_ms": 1.6568693283357119,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.9322269450908428,
+        "success": 1.0,
+        "latency_ms": 36.890708767857994,
+        "n_calls": 38
+      },
+      "reward_gain": 0.09967755437342429,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100042,
+      "discrepancy": 19.673343658447266,
+      "k0": {
+        "reward": 0.5253189168150504,
+        "success": 1.0,
+        "latency_ms": 1.5411113977040116,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 1.0,
+        "success": 1.0,
+        "latency_ms": 37.0813626529915,
+        "n_calls": 35
+      },
+      "reward_gain": 0.4746810831849496,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100043,
+      "discrepancy": 45.32025146484375,
+      "k0": {
+        "reward": 0.0,
+        "success": 0.0,
+        "latency_ms": 2.9958647087608514,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.7118099794822624,
+        "success": 1.0,
+        "latency_ms": 35.44810350592199,
+        "n_calls": 38
+      },
+      "reward_gain": 0.7118099794822624,
+      "success_gain": 1.0
+    },
+    {
+      "seed": 100044,
+      "discrepancy": 34.53447723388672,
+      "k0": {
+        "reward": 0.9533733097089057,
+        "success": 1.0,
+        "latency_ms": 1.6081758872850944,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.9539232508289541,
+        "success": 1.0,
+        "latency_ms": 37.022172399845566,
+        "n_calls": 38
+      },
+      "reward_gain": 0.0005499411200484694,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100045,
+      "discrepancy": 36.083457946777344,
+      "k0": {
+        "reward": 0.2273959935063362,
+        "success": 0.0,
+        "latency_ms": 1.5484593122413284,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.9917919670400135,
+        "success": 1.0,
+        "latency_ms": 36.94095673333658,
+        "n_calls": 38
+      },
+      "reward_gain": 0.7643959735336773,
+      "success_gain": 1.0
+    },
+    {
+      "seed": 100046,
+      "discrepancy": 22.203659057617188,
+      "k0": {
+        "reward": 0.2716583117633451,
+        "success": 0.0,
+        "latency_ms": 1.7069099029820216,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.9930773306177636,
+        "success": 1.0,
+        "latency_ms": 37.16346567594692,
+        "n_calls": 38
+      },
+      "reward_gain": 0.7214190188544185,
+      "success_gain": 1.0
+    },
+    {
+      "seed": 100047,
+      "discrepancy": 14.298105239868164,
+      "k0": {
+        "reward": 0.8429451120258303,
+        "success": 1.0,
+        "latency_ms": 2.107358758190745,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.9865485284186254,
+        "success": 1.0,
+        "latency_ms": 36.40116586987125,
+        "n_calls": 38
+      },
+      "reward_gain": 0.14360341639279506,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100048,
+      "discrepancy": 13.869028091430664,
+      "k0": {
+        "reward": 0.8381624360413976,
+        "success": 1.0,
+        "latency_ms": 1.7254094985362731,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.9510512023909139,
+        "success": 1.0,
+        "latency_ms": 36.76222980414566,
+        "n_calls": 38
+      },
+      "reward_gain": 0.11288876634951628,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100049,
+      "discrepancy": 8.224178314208984,
+      "k0": {
+        "reward": 0.6398845794442829,
+        "success": 1.0,
+        "latency_ms": 1.6962666995823383,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.989375411174583,
+        "success": 1.0,
+        "latency_ms": 36.33160048507546,
+        "n_calls": 38
+      },
+      "reward_gain": 0.34949083173030016,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100050,
+      "discrepancy": 39.71223449707031,
+      "k0": {
+        "reward": 0.0,
+        "success": 0.0,
+        "latency_ms": 1.7862756442474692,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.0,
+        "success": 0.0,
+        "latency_ms": 37.722554033328045,
+        "n_calls": 38
+      },
+      "reward_gain": 0.0,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100051,
+      "discrepancy": 39.953617095947266,
+      "k0": {
+        "reward": 0.9054744968536772,
+        "success": 1.0,
+        "latency_ms": 1.7536864125807035,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 1.0,
+        "success": 1.0,
+        "latency_ms": 38.74492835253477,
+        "n_calls": 25
+      },
+      "reward_gain": 0.0945255031463228,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100052,
+      "discrepancy": 40.493690490722656,
+      "k0": {
+        "reward": 0.008512052313723093,
+        "success": 0.0,
+        "latency_ms": 1.814563342026974,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.7653682843688147,
+        "success": 1.0,
+        "latency_ms": 36.82311719871665,
+        "n_calls": 38
+      },
+      "reward_gain": 0.7568562320550916,
+      "success_gain": 1.0
+    },
+    {
+      "seed": 100053,
+      "discrepancy": 31.69684600830078,
+      "k0": {
+        "reward": 0.28851836823154847,
+        "success": 0.0,
+        "latency_ms": 1.5901489624459493,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.31226287876615977,
+        "success": 0.0,
+        "latency_ms": 34.772928093412986,
+        "n_calls": 38
+      },
+      "reward_gain": 0.023744510534611296,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100054,
+      "discrepancy": 69.89532470703125,
+      "k0": {
+        "reward": 0.12610006696616252,
+        "success": 0.0,
+        "latency_ms": 1.88600852791416,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.9817356566562688,
+        "success": 1.0,
+        "latency_ms": 34.39706343373186,
+        "n_calls": 38
+      },
+      "reward_gain": 0.8556355896901063,
+      "success_gain": 1.0
+    },
+    {
+      "seed": 100055,
+      "discrepancy": 35.758907318115234,
+      "k0": {
+        "reward": 0.6564768908734896,
+        "success": 1.0,
+        "latency_ms": 1.7200532418332601,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 1.0,
+        "success": 1.0,
+        "latency_ms": 35.50692117558076,
+        "n_calls": 13
+      },
+      "reward_gain": 0.3435231091265104,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100056,
+      "discrepancy": 34.486087799072266,
+      "k0": {
+        "reward": 0.2885112579594379,
+        "success": 0.0,
+        "latency_ms": 3.096953671621649,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.9885465957113184,
+        "success": 1.0,
+        "latency_ms": 37.83508223530493,
+        "n_calls": 38
+      },
+      "reward_gain": 0.7000353377518805,
+      "success_gain": 1.0
+    },
+    {
+      "seed": 100057,
+      "discrepancy": 27.304752349853516,
+      "k0": {
+        "reward": 0.0,
+        "success": 0.0,
+        "latency_ms": 1.7079494795516919,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.030376804689995377,
+        "success": 0.0,
+        "latency_ms": 36.22917080984304,
+        "n_calls": 38
+      },
+      "reward_gain": 0.030376804689995377,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100058,
+      "discrepancy": 12.255687713623047,
+      "k0": {
+        "reward": 0.4337476107686164,
+        "success": 0.0,
+        "latency_ms": 3.6905656176570214,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.9944780797276165,
+        "success": 1.0,
+        "latency_ms": 37.09490089922359,
+        "n_calls": 38
+      },
+      "reward_gain": 0.560730468959,
+      "success_gain": 1.0
+    },
+    {
+      "seed": 100059,
+      "discrepancy": 23.33685302734375,
+      "k0": {
+        "reward": 0.14460607433720876,
+        "success": 0.0,
+        "latency_ms": 1.73215595024981,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.14460607433720876,
+        "success": 0.0,
+        "latency_ms": 36.298244774929785,
+        "n_calls": 38
+      },
+      "reward_gain": 0.0,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100060,
+      "discrepancy": 28.516637802124023,
+      "k0": {
+        "reward": 0.9648528020465523,
+        "success": 1.0,
+        "latency_ms": 1.614363447419907,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 1.0,
+        "success": 1.0,
+        "latency_ms": 36.26577520082074,
+        "n_calls": 31
+      },
+      "reward_gain": 0.03514719795344767,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100061,
+      "discrepancy": 22.57224464416504,
+      "k0": {
+        "reward": 0.5413442499838422,
+        "success": 1.0,
+        "latency_ms": 3.016633912920952,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.3790953619593719,
+        "success": 0.0,
+        "latency_ms": 36.88497709012345,
+        "n_calls": 38
+      },
+      "reward_gain": -0.16224888802447035,
+      "success_gain": -1.0
+    },
+    {
+      "seed": 100062,
+      "discrepancy": 32.62459945678711,
+      "k0": {
+        "reward": 0.08228793737556711,
+        "success": 0.0,
+        "latency_ms": 3.095248321953573,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 1.0,
+        "success": 1.0,
+        "latency_ms": 34.22311676496809,
+        "n_calls": 22
+      },
+      "reward_gain": 0.9177120626244328,
+      "success_gain": 1.0
+    },
+    {
+      "seed": 100063,
+      "discrepancy": 34.613861083984375,
+      "k0": {
+        "reward": 0.997756982344916,
+        "success": 1.0,
+        "latency_ms": 1.6835210599789494,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.8539002537990966,
+        "success": 1.0,
+        "latency_ms": 34.62450838598766,
+        "n_calls": 38
+      },
+      "reward_gain": -0.14385672854581943,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100064,
+      "discrepancy": 39.23893356323242,
+      "k0": {
+        "reward": 0.0,
+        "success": 0.0,
+        "latency_ms": 1.5759451412840892,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.931616551497608,
+        "success": 1.0,
+        "latency_ms": 36.33092216363079,
+        "n_calls": 38
+      },
+      "reward_gain": 0.931616551497608,
+      "success_gain": 1.0
+    },
+    {
+      "seed": 100065,
+      "discrepancy": 22.87952423095703,
+      "k0": {
+        "reward": 0.21571058156264458,
+        "success": 0.0,
+        "latency_ms": 1.5562427181162333,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.968598027439248,
+        "success": 1.0,
+        "latency_ms": 35.76511531872185,
+        "n_calls": 38
+      },
+      "reward_gain": 0.7528874458766035,
+      "success_gain": 1.0
+    },
+    {
+      "seed": 100066,
+      "discrepancy": 11.191282272338867,
+      "k0": {
+        "reward": 0.8859353946526018,
+        "success": 1.0,
+        "latency_ms": 1.9114373104744835,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.9736170434648868,
+        "success": 1.0,
+        "latency_ms": 35.655198373684755,
+        "n_calls": 38
+      },
+      "reward_gain": 0.0876816488122849,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100067,
+      "discrepancy": 17.742069244384766,
+      "k0": {
+        "reward": 0.9895353695630168,
+        "success": 1.0,
+        "latency_ms": 1.8470422119686478,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 1.0,
+        "success": 1.0,
+        "latency_ms": 35.77320533139365,
+        "n_calls": 35
+      },
+      "reward_gain": 0.010464630436983202,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100068,
+      "discrepancy": 8.486690521240234,
+      "k0": {
+        "reward": 0.33221607239514156,
+        "success": 0.0,
+        "latency_ms": 2.7734307866347465,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.33221607239514156,
+        "success": 0.0,
+        "latency_ms": 36.140447678534606,
+        "n_calls": 38
+      },
+      "reward_gain": 0.0,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100069,
+      "discrepancy": 16.656341552734375,
+      "k0": {
+        "reward": 0.04803485169700645,
+        "success": 0.0,
+        "latency_ms": 1.6676867380738258,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 1.0,
+        "success": 1.0,
+        "latency_ms": 37.07589470367465,
+        "n_calls": 36
+      },
+      "reward_gain": 0.9519651483029935,
+      "success_gain": 1.0
+    },
+    {
+      "seed": 100070,
+      "discrepancy": 48.24256896972656,
+      "k0": {
+        "reward": 0.0,
+        "success": 0.0,
+        "latency_ms": 1.8159870646501843,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.0,
+        "success": 0.0,
+        "latency_ms": 36.28883106437953,
+        "n_calls": 38
+      },
+      "reward_gain": 0.0,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100071,
+      "discrepancy": 10.099068641662598,
+      "k0": {
+        "reward": 0.9781408665397391,
+        "success": 1.0,
+        "latency_ms": 1.5787587157989804,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.9982229679787332,
+        "success": 1.0,
+        "latency_ms": 34.90280014413752,
+        "n_calls": 38
+      },
+      "reward_gain": 0.020082101438994138,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100072,
+      "discrepancy": 24.44244384765625,
+      "k0": {
+        "reward": 0.4002589823944676,
+        "success": 0.0,
+        "latency_ms": 1.596458574855014,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.8514137133027634,
+        "success": 1.0,
+        "latency_ms": 35.85806060092229,
+        "n_calls": 38
+      },
+      "reward_gain": 0.4511547309082958,
+      "success_gain": 1.0
+    },
+    {
+      "seed": 100073,
+      "discrepancy": 39.13172912597656,
+      "k0": {
+        "reward": 0.703213899241792,
+        "success": 1.0,
+        "latency_ms": 1.7211968814463992,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 1.0,
+        "success": 1.0,
+        "latency_ms": 36.04375727071955,
+        "n_calls": 37
+      },
+      "reward_gain": 0.296786100758208,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100074,
+      "discrepancy": 26.63092041015625,
+      "k0": {
+        "reward": 0.7696166184465199,
+        "success": 1.0,
+        "latency_ms": 1.787366222982344,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 1.0,
+        "success": 1.0,
+        "latency_ms": 40.656776167452335,
+        "n_calls": 10
+      },
+      "reward_gain": 0.23038338155348015,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100075,
+      "discrepancy": 34.115562438964844,
+      "k0": {
+        "reward": 0.08871601355680198,
+        "success": 0.0,
+        "latency_ms": 1.933774053070106,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.3161929387338215,
+        "success": 0.0,
+        "latency_ms": 36.28250084033138,
+        "n_calls": 38
+      },
+      "reward_gain": 0.2274769251770195,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100076,
+      "discrepancy": 71.50312805175781,
+      "k0": {
+        "reward": 0.8482959919073529,
+        "success": 1.0,
+        "latency_ms": 1.5634051769187576,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 1.0,
+        "success": 1.0,
+        "latency_ms": 36.60649902604777,
+        "n_calls": 29
+      },
+      "reward_gain": 0.15170400809264706,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100077,
+      "discrepancy": 17.501920700073242,
+      "k0": {
+        "reward": 0.9516615462329038,
+        "success": 1.0,
+        "latency_ms": 1.7326622221030687,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.9431129525043294,
+        "success": 1.0,
+        "latency_ms": 37.691630202492604,
+        "n_calls": 38
+      },
+      "reward_gain": -0.008548593728574416,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100078,
+      "discrepancy": 17.58968734741211,
+      "k0": {
+        "reward": 0.083788173265047,
+        "success": 0.0,
+        "latency_ms": 1.6304481480466693,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.08497535385632451,
+        "success": 0.0,
+        "latency_ms": 36.08561464046177,
+        "n_calls": 38
+      },
+      "reward_gain": 0.001187180591277509,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100079,
+      "discrepancy": 8.33028507232666,
+      "k0": {
+        "reward": 0.008464057457092734,
+        "success": 0.0,
+        "latency_ms": 1.8414550853010856,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 1.0,
+        "success": 1.0,
+        "latency_ms": 34.355968909545076,
+        "n_calls": 18
+      },
+      "reward_gain": 0.9915359425429072,
+      "success_gain": 1.0
+    },
+    {
+      "seed": 100080,
+      "discrepancy": 12.326642990112305,
+      "k0": {
+        "reward": 0.02461777138811562,
+        "success": 0.0,
+        "latency_ms": 1.712336106912086,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.0,
+        "success": 0.0,
+        "latency_ms": 36.82512875744387,
+        "n_calls": 38
+      },
+      "reward_gain": -0.02461777138811562,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100081,
+      "discrepancy": 17.486589431762695,
+      "k0": {
+        "reward": 0.8523197730956872,
+        "success": 1.0,
+        "latency_ms": 1.9760676414558762,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.9414521329046008,
+        "success": 1.0,
+        "latency_ms": 36.75501595104211,
+        "n_calls": 38
+      },
+      "reward_gain": 0.08913235980891365,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100082,
+      "discrepancy": 18.121671676635742,
+      "k0": {
+        "reward": 0.9378175880673124,
+        "success": 1.0,
+        "latency_ms": 1.717229986465291,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 1.0,
+        "success": 1.0,
+        "latency_ms": 37.93349979376352,
+        "n_calls": 27
+      },
+      "reward_gain": 0.06218241193268759,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100083,
+      "discrepancy": 16.763446807861328,
+      "k0": {
+        "reward": 0.9844546096459617,
+        "success": 1.0,
+        "latency_ms": 1.5095870108588745,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 1.0,
+        "success": 1.0,
+        "latency_ms": 38.51439237881165,
+        "n_calls": 13
+      },
+      "reward_gain": 0.015545390354038346,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100084,
+      "discrepancy": 21.10396957397461,
+      "k0": {
+        "reward": 0.0,
+        "success": 0.0,
+        "latency_ms": 2.1942234843185076,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 1.0,
+        "success": 1.0,
+        "latency_ms": 38.78334451180238,
+        "n_calls": 26
+      },
+      "reward_gain": 1.0,
+      "success_gain": 1.0
+    },
+    {
+      "seed": 100085,
+      "discrepancy": 57.044471740722656,
+      "k0": {
+        "reward": 0.0,
+        "success": 0.0,
+        "latency_ms": 3.163688718096206,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.0,
+        "success": 0.0,
+        "latency_ms": 35.74086456118446,
+        "n_calls": 38
+      },
+      "reward_gain": 0.0,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100086,
+      "discrepancy": 31.355257034301758,
+      "k0": {
+        "reward": 0.07067023129698662,
+        "success": 0.0,
+        "latency_ms": 3.0115513670209206,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.97568442957876,
+        "success": 1.0,
+        "latency_ms": 37.47514797080504,
+        "n_calls": 38
+      },
+      "reward_gain": 0.9050141982817734,
+      "success_gain": 1.0
+    },
+    {
+      "seed": 100087,
+      "discrepancy": 89.56507110595703,
+      "k0": {
+        "reward": 0.810361288566443,
+        "success": 1.0,
+        "latency_ms": 1.7549055628478527,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.11923156764390028,
+        "success": 0.0,
+        "latency_ms": 37.258415090802465,
+        "n_calls": 38
+      },
+      "reward_gain": -0.6911297209225427,
+      "success_gain": -1.0
+    },
+    {
+      "seed": 100088,
+      "discrepancy": 28.955596923828125,
+      "k0": {
+        "reward": 0.41299555753837225,
+        "success": 0.0,
+        "latency_ms": 3.5125289455448327,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 1.0,
+        "success": 1.0,
+        "latency_ms": 37.714989215601236,
+        "n_calls": 32
+      },
+      "reward_gain": 0.5870044424616278,
+      "success_gain": 1.0
+    },
+    {
+      "seed": 100089,
+      "discrepancy": 50.59735107421875,
+      "k0": {
+        "reward": 0.3350876177826586,
+        "success": 0.0,
+        "latency_ms": 3.086631995086607,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 1.0,
+        "success": 1.0,
+        "latency_ms": 35.2374317124486,
+        "n_calls": 30
+      },
+      "reward_gain": 0.6649123822173414,
+      "success_gain": 1.0
+    },
+    {
+      "seed": 100090,
+      "discrepancy": 23.038375854492188,
+      "k0": {
+        "reward": 0.00185223408593476,
+        "success": 0.0,
+        "latency_ms": 1.538201161709271,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.9734986815302082,
+        "success": 1.0,
+        "latency_ms": 38.112635258585215,
+        "n_calls": 38
+      },
+      "reward_gain": 0.9716464474442735,
+      "success_gain": 1.0
+    },
+    {
+      "seed": 100091,
+      "discrepancy": 90.93749237060547,
+      "k0": {
+        "reward": 0.0,
+        "success": 0.0,
+        "latency_ms": 1.6417593548172398,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.9711643640961767,
+        "success": 1.0,
+        "latency_ms": 35.794184004005636,
+        "n_calls": 38
+      },
+      "reward_gain": 0.9711643640961767,
+      "success_gain": 1.0
+    },
+    {
+      "seed": 100092,
+      "discrepancy": 27.841487884521484,
+      "k0": {
+        "reward": 0.013329148286368078,
+        "success": 0.0,
+        "latency_ms": 1.547570609928746,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.9896127718126309,
+        "success": 1.0,
+        "latency_ms": 34.086170875908515,
+        "n_calls": 38
+      },
+      "reward_gain": 0.9762836235262627,
+      "success_gain": 1.0
+    },
+    {
+      "seed": 100093,
+      "discrepancy": 24.03510093688965,
+      "k0": {
+        "reward": 0.0,
+        "success": 0.0,
+        "latency_ms": 2.0566955944033047,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.0,
+        "success": 0.0,
+        "latency_ms": 35.119147652662114,
+        "n_calls": 38
+      },
+      "reward_gain": 0.0,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100094,
+      "discrepancy": 15.366838455200195,
+      "k0": {
+        "reward": 0.6651178910875398,
+        "success": 1.0,
+        "latency_ms": 1.5557992370112945,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.9041430647822449,
+        "success": 1.0,
+        "latency_ms": 36.28435924551204,
+        "n_calls": 38
+      },
+      "reward_gain": 0.2390251736947051,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100095,
+      "discrepancy": 27.403518676757812,
+      "k0": {
+        "reward": 0.0,
+        "success": 0.0,
+        "latency_ms": 1.6541566552692337,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.15469737857917706,
+        "success": 0.0,
+        "latency_ms": 36.052883235051446,
+        "n_calls": 38
+      },
+      "reward_gain": 0.15469737857917706,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100096,
+      "discrepancy": 28.571392059326172,
+      "k0": {
+        "reward": 0.0013234065130538373,
+        "success": 0.0,
+        "latency_ms": 2.857440298325137,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 1.0,
+        "success": 1.0,
+        "latency_ms": 36.66427753571617,
+        "n_calls": 38
+      },
+      "reward_gain": 0.9986765934869462,
+      "success_gain": 1.0
+    },
+    {
+      "seed": 100097,
+      "discrepancy": 39.913639068603516,
+      "k0": {
+        "reward": 0.6018602418559202,
+        "success": 1.0,
+        "latency_ms": 1.604176101912009,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.9765626522509046,
+        "success": 1.0,
+        "latency_ms": 35.68664124529613,
+        "n_calls": 38
+      },
+      "reward_gain": 0.3747024103949843,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100098,
+      "discrepancy": 17.109310150146484,
+      "k0": {
+        "reward": 1.0,
+        "success": 1.0,
+        "latency_ms": 1.8408201738364167,
+        "n_calls": 18
+      },
+      "k5": {
+        "reward": 0.4953369328358198,
+        "success": 0.0,
+        "latency_ms": 35.1029117836764,
+        "n_calls": 38
+      },
+      "reward_gain": -0.5046630671641802,
+      "success_gain": -1.0
+    },
+    {
+      "seed": 100099,
+      "discrepancy": 20.262300491333008,
+      "k0": {
+        "reward": 0.8378788732199277,
+        "success": 1.0,
+        "latency_ms": 1.6137281383730864,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.9608391418183957,
+        "success": 1.0,
+        "latency_ms": 35.4097989926997,
+        "n_calls": 38
+      },
+      "reward_gain": 0.12296026859846798,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100100,
+      "discrepancy": 57.350372314453125,
+      "k0": {
+        "reward": 0.26763374960877906,
+        "success": 0.0,
+        "latency_ms": 1.604951991650619,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.04698543384920085,
+        "success": 0.0,
+        "latency_ms": 36.95869654122936,
+        "n_calls": 38
+      },
+      "reward_gain": -0.22064831575957822,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100101,
+      "discrepancy": 29.787776947021484,
+      "k0": {
+        "reward": 0.0,
+        "success": 0.0,
+        "latency_ms": 1.6995507635568317,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.0,
+        "success": 0.0,
+        "latency_ms": 36.115568008665974,
+        "n_calls": 38
+      },
+      "reward_gain": 0.0,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100102,
+      "discrepancy": 21.30376434326172,
+      "k0": {
+        "reward": 0.9050418953341967,
+        "success": 1.0,
+        "latency_ms": 2.028380275556916,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.9841008631091082,
+        "success": 1.0,
+        "latency_ms": 34.55851847109826,
+        "n_calls": 38
+      },
+      "reward_gain": 0.0790589677749115,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100103,
+      "discrepancy": 14.8919677734375,
+      "k0": {
+        "reward": 0.8952275799359096,
+        "success": 1.0,
+        "latency_ms": 1.6333154941859997,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.9536112096224209,
+        "success": 1.0,
+        "latency_ms": 36.89667906023954,
+        "n_calls": 38
+      },
+      "reward_gain": 0.05838362968651123,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100104,
+      "discrepancy": 17.32544708251953,
+      "k0": {
+        "reward": 0.0,
+        "success": 0.0,
+        "latency_ms": 1.691412817882864,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.0,
+        "success": 0.0,
+        "latency_ms": 37.413166615327725,
+        "n_calls": 38
+      },
+      "reward_gain": 0.0,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100105,
+      "discrepancy": 17.5361385345459,
+      "k0": {
+        "reward": 0.05793112998609874,
+        "success": 0.0,
+        "latency_ms": 2.4374061950335375,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.039499125601670855,
+        "success": 0.0,
+        "latency_ms": 34.40309982550772,
+        "n_calls": 38
+      },
+      "reward_gain": -0.018432004384427887,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100106,
+      "discrepancy": 21.73615074157715,
+      "k0": {
+        "reward": 0.23917085409291294,
+        "success": 0.0,
+        "latency_ms": 3.7140931296897564,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 1.0,
+        "success": 1.0,
+        "latency_ms": 35.97110653804107,
+        "n_calls": 33
+      },
+      "reward_gain": 0.7608291459070871,
+      "success_gain": 1.0
+    },
+    {
+      "seed": 100107,
+      "discrepancy": 9.650888442993164,
+      "k0": {
+        "reward": 0.9275671147513305,
+        "success": 1.0,
+        "latency_ms": 3.0972546358641826,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.9867066861836884,
+        "success": 1.0,
+        "latency_ms": 36.52632591853801,
+        "n_calls": 38
+      },
+      "reward_gain": 0.05913957143235793,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100108,
+      "discrepancy": 13.065195083618164,
+      "k0": {
+        "reward": 0.9114436226443293,
+        "success": 1.0,
+        "latency_ms": 2.902915260117305,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.9991225757610599,
+        "success": 1.0,
+        "latency_ms": 37.73379436154899,
+        "n_calls": 38
+      },
+      "reward_gain": 0.08767895311673057,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100109,
+      "discrepancy": 38.8526496887207,
+      "k0": {
+        "reward": 0.691956875384338,
+        "success": 1.0,
+        "latency_ms": 1.6193330336950327,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 1.0,
+        "success": 1.0,
+        "latency_ms": 35.013593943609344,
+        "n_calls": 31
+      },
+      "reward_gain": 0.30804312461566197,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100110,
+      "discrepancy": 12.656990051269531,
+      "k0": {
+        "reward": 0.0009041868342477595,
+        "success": 0.0,
+        "latency_ms": 3.2941460805503944,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.9428872638687275,
+        "success": 1.0,
+        "latency_ms": 36.77207819725338,
+        "n_calls": 38
+      },
+      "reward_gain": 0.9419830770344797,
+      "success_gain": 1.0
+    },
+    {
+      "seed": 100111,
+      "discrepancy": 20.79644775390625,
+      "k0": {
+        "reward": 0.8590081427334078,
+        "success": 1.0,
+        "latency_ms": 3.098900773023304,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.9560017685120245,
+        "success": 1.0,
+        "latency_ms": 37.07315314463094,
+        "n_calls": 38
+      },
+      "reward_gain": 0.0969936257786167,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100112,
+      "discrepancy": 12.729316711425781,
+      "k0": {
+        "reward": 0.7659717332063358,
+        "success": 1.0,
+        "latency_ms": 1.7301521362050583,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.3704977269128862,
+        "success": 0.0,
+        "latency_ms": 36.793377103382035,
+        "n_calls": 38
+      },
+      "reward_gain": -0.39547400629344964,
+      "success_gain": -1.0
+    },
+    {
+      "seed": 100113,
+      "discrepancy": 17.148862838745117,
+      "k0": {
+        "reward": 0.971638483981747,
+        "success": 1.0,
+        "latency_ms": 1.6963937760967958,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.8578956161756707,
+        "success": 1.0,
+        "latency_ms": 36.181914154440165,
+        "n_calls": 38
+      },
+      "reward_gain": -0.11374286780607634,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100114,
+      "discrepancy": 14.22103214263916,
+      "k0": {
+        "reward": 0.0,
+        "success": 0.0,
+        "latency_ms": 1.6590679603579797,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 1.0,
+        "success": 1.0,
+        "latency_ms": 37.038976326584816,
+        "n_calls": 31
+      },
+      "reward_gain": 1.0,
+      "success_gain": 1.0
+    },
+    {
+      "seed": 100115,
+      "discrepancy": 13.201985359191895,
+      "k0": {
+        "reward": 0.913305015937139,
+        "success": 1.0,
+        "latency_ms": 1.6080115333591636,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 1.0,
+        "success": 1.0,
+        "latency_ms": 35.94740136000125,
+        "n_calls": 23
+      },
+      "reward_gain": 0.08669498406286102,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100116,
+      "discrepancy": 56.79930877685547,
+      "k0": {
+        "reward": 0.7915051566905181,
+        "success": 1.0,
+        "latency_ms": 1.717635209819204,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 1.0,
+        "success": 1.0,
+        "latency_ms": 35.44243734658641,
+        "n_calls": 34
+      },
+      "reward_gain": 0.20849484330948187,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100117,
+      "discrepancy": 28.516538619995117,
+      "k0": {
+        "reward": 0.9209011904174415,
+        "success": 1.0,
+        "latency_ms": 1.6156965376515138,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.9886082836003759,
+        "success": 1.0,
+        "latency_ms": 35.59645767764825,
+        "n_calls": 38
+      },
+      "reward_gain": 0.06770709318293444,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100118,
+      "discrepancy": 23.405031204223633,
+      "k0": {
+        "reward": 0.0,
+        "success": 0.0,
+        "latency_ms": 1.9958500358227051,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.0,
+        "success": 0.0,
+        "latency_ms": 35.32051446994669,
+        "n_calls": 38
+      },
+      "reward_gain": 0.0,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100119,
+      "discrepancy": 10.900764465332031,
+      "k0": {
+        "reward": 0.8523640031416742,
+        "success": 1.0,
+        "latency_ms": 1.5675779186973446,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.9532492186055008,
+        "success": 1.0,
+        "latency_ms": 35.32072475278064,
+        "n_calls": 38
+      },
+      "reward_gain": 0.10088521546382667,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100120,
+      "discrepancy": 31.03209114074707,
+      "k0": {
+        "reward": 0.0,
+        "success": 0.0,
+        "latency_ms": 1.4671807079330872,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.9166640373788748,
+        "success": 1.0,
+        "latency_ms": 35.596039538320746,
+        "n_calls": 38
+      },
+      "reward_gain": 0.9166640373788748,
+      "success_gain": 1.0
+    },
+    {
+      "seed": 100121,
+      "discrepancy": 11.006414413452148,
+      "k0": {
+        "reward": 0.48056620083918694,
+        "success": 0.0,
+        "latency_ms": 1.6816450086863417,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.01427821950416553,
+        "success": 0.0,
+        "latency_ms": 36.39762843713949,
+        "n_calls": 38
+      },
+      "reward_gain": -0.4662879813350214,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100122,
+      "discrepancy": 11.80804443359375,
+      "k0": {
+        "reward": 0.7938841166068349,
+        "success": 1.0,
+        "latency_ms": 1.789248009261332,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 1.0,
+        "success": 1.0,
+        "latency_ms": 34.584043059675466,
+        "n_calls": 21
+      },
+      "reward_gain": 0.2061158833931651,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100123,
+      "discrepancy": 33.61018371582031,
+      "k0": {
+        "reward": 0.48822611208394984,
+        "success": 0.0,
+        "latency_ms": 3.33637655957749,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.9223426145008263,
+        "success": 1.0,
+        "latency_ms": 35.90834917696683,
+        "n_calls": 38
+      },
+      "reward_gain": 0.4341165024168765,
+      "success_gain": 1.0
+    },
+    {
+      "seed": 100124,
+      "discrepancy": 28.38929557800293,
+      "k0": {
+        "reward": 0.9400912789024335,
+        "success": 1.0,
+        "latency_ms": 1.6161348719738031,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 1.0,
+        "success": 1.0,
+        "latency_ms": 37.37329517531654,
+        "n_calls": 23
+      },
+      "reward_gain": 0.05990872109756651,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100125,
+      "discrepancy": 18.580001831054688,
+      "k0": {
+        "reward": 0.053451231297925915,
+        "success": 0.0,
+        "latency_ms": 1.602543125811376,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.9701090113254958,
+        "success": 1.0,
+        "latency_ms": 36.19335726589749,
+        "n_calls": 38
+      },
+      "reward_gain": 0.9166577800275698,
+      "success_gain": 1.0
+    },
+    {
+      "seed": 100126,
+      "discrepancy": 10.561407089233398,
+      "k0": {
+        "reward": 0.0,
+        "success": 0.0,
+        "latency_ms": 1.6199592010755288,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.0,
+        "success": 0.0,
+        "latency_ms": 38.22403859445139,
+        "n_calls": 38
+      },
+      "reward_gain": 0.0,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100127,
+      "discrepancy": 42.32051086425781,
+      "k0": {
+        "reward": 0.0,
+        "success": 0.0,
+        "latency_ms": 2.044348462827896,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 1.0,
+        "success": 1.0,
+        "latency_ms": 34.088916872860864,
+        "n_calls": 32
+      },
+      "reward_gain": 1.0,
+      "success_gain": 1.0
+    },
+    {
+      "seed": 100128,
+      "discrepancy": 7.139495849609375,
+      "k0": {
+        "reward": 0.0,
+        "success": 0.0,
+        "latency_ms": 3.282736986875534,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.0,
+        "success": 0.0,
+        "latency_ms": 36.717930906697326,
+        "n_calls": 38
+      },
+      "reward_gain": 0.0,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100129,
+      "discrepancy": 35.23068618774414,
+      "k0": {
+        "reward": 0.0,
+        "success": 0.0,
+        "latency_ms": 1.7446289574237246,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 1.0,
+        "success": 1.0,
+        "latency_ms": 35.28349415088693,
+        "n_calls": 30
+      },
+      "reward_gain": 1.0,
+      "success_gain": 1.0
+    },
+    {
+      "seed": 100130,
+      "discrepancy": 38.57721710205078,
+      "k0": {
+        "reward": 0.9950931604354869,
+        "success": 1.0,
+        "latency_ms": 1.5663872227856988,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.9440929505971053,
+        "success": 1.0,
+        "latency_ms": 37.58109120750114,
+        "n_calls": 38
+      },
+      "reward_gain": -0.051000209838381605,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100131,
+      "discrepancy": 31.622976303100586,
+      "k0": {
+        "reward": 0.9630648280019111,
+        "success": 1.0,
+        "latency_ms": 2.9662724241222205,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.9785675102919693,
+        "success": 1.0,
+        "latency_ms": 37.656253399817565,
+        "n_calls": 38
+      },
+      "reward_gain": 0.015502682290058245,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100132,
+      "discrepancy": 43.65736389160156,
+      "k0": {
+        "reward": 0.0,
+        "success": 0.0,
+        "latency_ms": 1.97280168925461,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.0,
+        "success": 0.0,
+        "latency_ms": 35.63014415435885,
+        "n_calls": 38
+      },
+      "reward_gain": 0.0,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100133,
+      "discrepancy": 28.20596694946289,
+      "k0": {
+        "reward": 0.4734200272351475,
+        "success": 0.0,
+        "latency_ms": 1.7094959897038184,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.9697881716279352,
+        "success": 1.0,
+        "latency_ms": 35.749915301015506,
+        "n_calls": 38
+      },
+      "reward_gain": 0.4963681443927877,
+      "success_gain": 1.0
+    },
+    {
+      "seed": 100134,
+      "discrepancy": 43.19515609741211,
+      "k0": {
+        "reward": 0.8620389743262966,
+        "success": 1.0,
+        "latency_ms": 1.6543421355125152,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.9325758591332666,
+        "success": 1.0,
+        "latency_ms": 36.24705034063051,
+        "n_calls": 38
+      },
+      "reward_gain": 0.07053688480696996,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100135,
+      "discrepancy": 11.645042419433594,
+      "k0": {
+        "reward": 0.8044947149521622,
+        "success": 1.0,
+        "latency_ms": 2.9905570033741626,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 1.0,
+        "success": 1.0,
+        "latency_ms": 36.73072418550382,
+        "n_calls": 37
+      },
+      "reward_gain": 0.19550528504783782,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100136,
+      "discrepancy": 19.928123474121094,
+      "k0": {
+        "reward": 0.7687439094127844,
+        "success": 1.0,
+        "latency_ms": 1.9862899605772997,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 1.0,
+        "success": 1.0,
+        "latency_ms": 34.10620457891907,
+        "n_calls": 35
+      },
+      "reward_gain": 0.23125609058721563,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100137,
+      "discrepancy": 25.437528610229492,
+      "k0": {
+        "reward": 0.0,
+        "success": 0.0,
+        "latency_ms": 1.8252850216078131,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.0,
+        "success": 0.0,
+        "latency_ms": 35.99692689941118,
+        "n_calls": 38
+      },
+      "reward_gain": 0.0,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100138,
+      "discrepancy": 17.06081771850586,
+      "k0": {
+        "reward": 0.0007416391337841182,
+        "success": 0.0,
+        "latency_ms": 1.613372152573184,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.0,
+        "success": 0.0,
+        "latency_ms": 35.585080788127684,
+        "n_calls": 38
+      },
+      "reward_gain": -0.0007416391337841182,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100139,
+      "discrepancy": 8.135934829711914,
+      "k0": {
+        "reward": 0.8473965746812683,
+        "success": 1.0,
+        "latency_ms": 3.062569707828133,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.9451522930673368,
+        "success": 1.0,
+        "latency_ms": 36.043873448905195,
+        "n_calls": 38
+      },
+      "reward_gain": 0.09775571838606856,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100140,
+      "discrepancy": 21.655803680419922,
+      "k0": {
+        "reward": 0.23968841617685796,
+        "success": 0.0,
+        "latency_ms": 1.727950538655645,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.8415164625103176,
+        "success": 1.0,
+        "latency_ms": 35.64966717538865,
+        "n_calls": 38
+      },
+      "reward_gain": 0.6018280463334597,
+      "success_gain": 1.0
+    },
+    {
+      "seed": 100141,
+      "discrepancy": 18.383686065673828,
+      "k0": {
+        "reward": 0.0,
+        "success": 0.0,
+        "latency_ms": 1.704834842760312,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.0,
+        "success": 0.0,
+        "latency_ms": 36.23020543569797,
+        "n_calls": 38
+      },
+      "reward_gain": 0.0,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100142,
+      "discrepancy": 21.62481689453125,
+      "k0": {
+        "reward": 0.8763811374308854,
+        "success": 1.0,
+        "latency_ms": 1.708234611310457,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.8564483299393428,
+        "success": 1.0,
+        "latency_ms": 36.10695256410461,
+        "n_calls": 38
+      },
+      "reward_gain": -0.01993280749154258,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100143,
+      "discrepancy": 8.705472946166992,
+      "k0": {
+        "reward": 0.0,
+        "success": 0.0,
+        "latency_ms": 1.7998243289950646,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.0,
+        "success": 0.0,
+        "latency_ms": 35.80886309378241,
+        "n_calls": 38
+      },
+      "reward_gain": 0.0,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100144,
+      "discrepancy": 29.303543090820312,
+      "k0": {
+        "reward": 0.33153527055133547,
+        "success": 0.0,
+        "latency_ms": 1.6261153168192035,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.9742893160917636,
+        "success": 1.0,
+        "latency_ms": 35.93171804555153,
+        "n_calls": 38
+      },
+      "reward_gain": 0.6427540455404281,
+      "success_gain": 1.0
+    },
+    {
+      "seed": 100145,
+      "discrepancy": 10.331594467163086,
+      "k0": {
+        "reward": 0.5618723933958473,
+        "success": 1.0,
+        "latency_ms": 1.6134712158849365,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.9826777149283304,
+        "success": 1.0,
+        "latency_ms": 33.76411820614808,
+        "n_calls": 38
+      },
+      "reward_gain": 0.4208053215324832,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100146,
+      "discrepancy": 27.080055236816406,
+      "k0": {
+        "reward": 0.8767269079502378,
+        "success": 1.0,
+        "latency_ms": 1.573229110554645,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 1.0,
+        "success": 1.0,
+        "latency_ms": 40.62320227519824,
+        "n_calls": 26
+      },
+      "reward_gain": 0.12327309204976222,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100147,
+      "discrepancy": 11.994873046875,
+      "k0": {
+        "reward": 0.8852249409088764,
+        "success": 1.0,
+        "latency_ms": 1.5681090666667412,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.986817589115801,
+        "success": 1.0,
+        "latency_ms": 34.01857533639199,
+        "n_calls": 38
+      },
+      "reward_gain": 0.1015926482069246,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100148,
+      "discrepancy": 37.363746643066406,
+      "k0": {
+        "reward": 0.0,
+        "success": 0.0,
+        "latency_ms": 1.9780301341885014,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.0,
+        "success": 0.0,
+        "latency_ms": 35.28206329792738,
+        "n_calls": 38
+      },
+      "reward_gain": 0.0,
+      "success_gain": 0.0
+    },
+    {
+      "seed": 100149,
+      "discrepancy": 6.1295976638793945,
+      "k0": {
+        "reward": 0.4406120494790548,
+        "success": 0.0,
+        "latency_ms": 3.1601868226732077,
+        "n_calls": 38
+      },
+      "k5": {
+        "reward": 0.18772343812633016,
+        "success": 0.0,
+        "latency_ms": 34.72372597867721,
+        "n_calls": 38
+      },
+      "reward_gain": -0.25288861135272467,
+      "success_gain": 0.0
+    }
+  ]
+}

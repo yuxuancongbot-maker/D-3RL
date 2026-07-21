@@ -111,6 +111,8 @@ class PEGradOptimizer:
         cost_loss: torch.Tensor,
         parameters: List[torch.nn.Parameter],
         retain_graph: bool = False,
+        task_weight: Optional[float] = None,
+        cost_weight: Optional[float] = None,
     ) -> Dict[str, float]:
         """
         使用 PEGrad 进行优化步骤
@@ -148,10 +150,12 @@ class PEGradOptimizer:
         else:
             cost_grad_projected = cost_grad_flat
         
-        # 6. 组合梯度
+        # 6. 组合梯度。允许调用方按 epoch 覆盖权重，用于 cost warmup。
+        tw = self.task_weight if task_weight is None else float(task_weight)
+        cw = self.cost_weight if cost_weight is None else float(cost_weight)
         combined_grad = (
-            self.task_weight * task_grad_flat + 
-            self.cost_weight * cost_grad_projected
+            tw * task_grad_flat +
+            cw * cost_grad_projected
         )
         
         # 7. 梯度裁剪
@@ -338,6 +342,9 @@ class PPOWithPEGrad:
         advantages: torch.Tensor,
         returns: torch.Tensor,
         refinement_steps: torch.Tensor,
+        cost_weight: Optional[float] = None,
+        frozen_scheduler: Optional[nn.Module] = None,
+        kl_coef: float = 0.0,
     ) -> Dict[str, float]:
         """
         PPO 更新步骤（使用 PEGrad 双损失分离）
@@ -365,6 +372,7 @@ class PPOWithPEGrad:
         total_value_loss = 0
         total_entropy = 0
         total_conflict_ratio = 0
+        total_kl_loss = 0
         n_updates = 0
 
         for _ in range(self.n_epochs):
@@ -397,6 +405,17 @@ class PPOWithPEGrad:
                 value_loss = nn.functional.mse_loss(values, batch_returns)
                 entropy_loss = -entropy.mean()
                 task_loss = task_policy_loss + self.value_loss_coef * value_loss + self.entropy_coef * entropy_loss
+                kl_loss = None
+                if frozen_scheduler is not None and kl_coef > 0:
+                    train_logits, _ = self.policy.scheduler.forward(batch_obs, batch_init_actions)
+                    with torch.no_grad():
+                        frozen_logits, _ = frozen_scheduler.forward(batch_obs, batch_init_actions)
+                    kl_loss = nn.functional.kl_div(
+                        nn.functional.log_softmax(train_logits, dim=-1),
+                        nn.functional.softmax(frozen_logits, dim=-1),
+                        reduction='batchmean',
+                    )
+                    task_loss = task_loss + kl_coef * kl_loss
 
                 # === 效率损失 (PPO clip on cost advantage) ===
                 surr1_c = ratio * batch_cost_adv
@@ -410,12 +429,14 @@ class PPOWithPEGrad:
                     cost_loss=cost_loss,
                     parameters=params,
                     retain_graph=False,
+                    cost_weight=cost_weight,
                 )
 
                 total_policy_loss += task_policy_loss.item()
                 total_value_loss += value_loss.item()
                 total_entropy += entropy.mean().item()
                 total_conflict_ratio += info['conflict_ratio']
+                total_kl_loss += kl_loss.item() if kl_loss is not None else 0.0
                 n_updates += 1
 
         return {
@@ -423,4 +444,6 @@ class PPOWithPEGrad:
             'value_loss': total_value_loss / max(n_updates, 1),
             'entropy': total_entropy / max(n_updates, 1),
             'conflict_ratio': total_conflict_ratio / max(n_updates, 1),
+            'kl_loss': total_kl_loss / max(n_updates, 1),
+            'cost_weight': 0.0 if cost_weight is None else float(cost_weight),
         }

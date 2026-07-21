@@ -18,6 +18,7 @@ exp_name: ${oc.select:experiment.exp_name,default}
 horizon: ${experiment.horizon}
 n_obs_steps: ${experiment.n_obs_steps}
 n_action_steps: ${experiment.n_action_steps}
+dataset_obs_steps: ${oc.select:experiment.dataset_obs_steps,${n_obs_steps}}
 n_latency_steps: ${oc.select:experiment.n_latency_steps,0}
 past_action_visible: ${oc.select:experiment.past_action_visible,false}
 keypoint_visible_rate: ${oc.select:experiment.keypoint_visible_rate,1.0}
@@ -34,6 +35,7 @@ optimizer: ${oc.select:experiment.optimizer,null}
 vae_model: ${oc.select:experiment.vae_model,null}
 use_vae: ${oc.select:experiment.use_vae,false}
 scheduler: ${oc.select:experiment.scheduler,null}
+stage4: ${oc.select:experiment.stage4,null}
 pegrad: ${oc.select:experiment.pegrad,null}
 ppo: ${oc.select:experiment.ppo,null}
 source_policy_checkpoint: ${oc.select:experiment.source_policy_checkpoint,null}

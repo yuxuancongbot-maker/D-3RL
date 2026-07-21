@@ -1,0 +1,1888 @@
+{
+  "task": "Lift",
+  "task_key": "lift",
+  "epoch": "49",
+  "checkpoint": "/inspire/hdd/project/inference-chip/lijinhao-240108540148/research_yuxuancong/icml_and_iros/d3rl_diffusion_policy/outputs/lift/checkpoints/epoch=0249-test_mean_score=1.000.ckpt",
+  "n_runs": 3,
+  "n_episodes_per_run": 50,
+  "seed_starts": [
+    100000,
+    100050,
+    100100
+  ],
+  "summary": {
+    "acc_percent": "100.0\u00b10.0%",
+    "latency_ms": "14.2\u00b10.1",
+    "avg_nfe": "1.60\u00b10.01",
+    "mean_reward": "1.00\u00b10.00",
+    "acc_mean": 1.0,
+    "acc_std": 0.0,
+    "latency_mean": 14.172009717424709,
+    "latency_std": 0.09033611291173232,
+    "avg_nfe_mean": 1.5999999999999999,
+    "avg_nfe_std": 0.0053962950252928535
+  },
+  "runs": [
+    {
+      "success": 1.0,
+      "mean_reward": 1.0,
+      "avg_nfe": 1.5932,
+      "latency_ms": 14.045197778940201,
+      "total_calls": 2500,
+      "k_counts": {
+        "0": 574,
+        "1": 193,
+        "2": 1625,
+        "5": 108
+      },
+      "episodes": [
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.7,
+          "latency_ms": 14.945150539278984,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 9,
+            "1": 3,
+            "2": 36,
+            "5": 2
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.2,
+          "latency_ms": 11.412975564599037,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 23,
+            "2": 25,
+            "5": 2
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.88,
+          "latency_ms": 16.04857012629509,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 15,
+            "2": 27,
+            "5": 8
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.02,
+          "latency_ms": 9.800011664628983,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 28,
+            "1": 5,
+            "2": 13,
+            "5": 4
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 2.42,
+          "latency_ms": 19.872553274035454,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 5,
+            "1": 8,
+            "2": 24,
+            "5": 13
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.98,
+          "latency_ms": 16.643905863165855,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 11,
+            "2": 32,
+            "5": 7
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.96,
+          "latency_ms": 16.616585329174995,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 1,
+            "2": 49
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.94,
+          "latency_ms": 16.416661217808723,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 6,
+            "2": 41,
+            "5": 3
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.74,
+          "latency_ms": 15.083210840821266,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 4,
+            "1": 5,
+            "2": 41
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.3,
+          "latency_ms": 11.907856985926628,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 17,
+            "1": 1,
+            "2": 32
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 3.18,
+          "latency_ms": 24.716850370168686,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 3,
+            "1": 1,
+            "2": 24,
+            "5": 22
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 0.92,
+          "latency_ms": 9.314740970730782,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 29,
+            "1": 2,
+            "2": 17,
+            "5": 2
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.86,
+          "latency_ms": 15.86813896894455,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 3,
+            "1": 1,
+            "2": 46
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.84,
+          "latency_ms": 15.646796077489853,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 4,
+            "2": 46
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.5,
+          "latency_ms": 13.91193687915802,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 3,
+            "1": 19,
+            "2": 28
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.36,
+          "latency_ms": 12.420799881219864,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 14,
+            "1": 7,
+            "2": 28,
+            "5": 1
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.34,
+          "latency_ms": 12.446870505809784,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 11,
+            "1": 11,
+            "2": 28
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.14,
+          "latency_ms": 10.981785580515862,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 21,
+            "1": 4,
+            "2": 24,
+            "5": 1
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.8,
+          "latency_ms": 15.409981310367584,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 4,
+            "1": 2,
+            "2": 44
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.4,
+          "latency_ms": 12.47580848634243,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 21,
+            "1": 3,
+            "2": 21,
+            "5": 5
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.8,
+          "latency_ms": 15.52905060350895,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 5,
+            "2": 45
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.84,
+          "latency_ms": 15.731828957796097,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 2,
+            "1": 4,
+            "2": 44
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 0.9,
+          "latency_ms": 9.056219533085823,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 25,
+            "1": 8,
+            "2": 16,
+            "5": 1
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.92,
+          "latency_ms": 16.3859823346138,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 2,
+            "2": 48
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 0.98,
+          "latency_ms": 9.615825042128563,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 24,
+            "1": 3,
+            "2": 23
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.6,
+          "latency_ms": 13.966644927859306,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 13,
+            "1": 3,
+            "2": 31,
+            "5": 3
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.36,
+          "latency_ms": 12.692073062062263,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 5,
+            "1": 22,
+            "2": 23
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.52,
+          "latency_ms": 13.008803576231003,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 27,
+            "1": 6,
+            "2": 5,
+            "5": 12
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.24,
+          "latency_ms": 11.56714841723442,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 20,
+            "1": 4,
+            "2": 24,
+            "5": 2
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.28,
+          "latency_ms": 12.035841196775436,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 8,
+            "1": 23,
+            "2": 18,
+            "5": 1
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.2,
+          "latency_ms": 11.431018933653831,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 13,
+            "1": 14,
+            "2": 23
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.3,
+          "latency_ms": 11.544622257351875,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 35,
+            "1": 1,
+            "2": 2,
+            "5": 12
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.58,
+          "latency_ms": 14.026734009385109,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 10,
+            "1": 1,
+            "2": 39
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 0.26,
+          "latency_ms": 4.456650018692017,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 43,
+            "1": 1,
+            "2": 6
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.66,
+          "latency_ms": 14.374345541000366,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 10,
+            "2": 39,
+            "5": 1
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.88,
+          "latency_ms": 16.26351311802864,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 3,
+            "2": 47
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.26,
+          "latency_ms": 11.46593190729618,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 23,
+            "2": 24,
+            "5": 3
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.92,
+          "latency_ms": 16.473278626799583,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 2,
+            "2": 48
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.76,
+          "latency_ms": 15.348915830254555,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 5,
+            "1": 2,
+            "2": 43
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.92,
+          "latency_ms": 16.31995089352131,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 2,
+            "2": 48
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.6,
+          "latency_ms": 14.268395379185677,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 6,
+            "1": 8,
+            "2": 36
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.88,
+          "latency_ms": 16.16155818104744,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 3,
+            "2": 47
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.84,
+          "latency_ms": 15.830875188112259,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 4,
+            "2": 46
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.86,
+          "latency_ms": 15.943301767110825,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 2,
+            "1": 3,
+            "2": 45
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.62,
+          "latency_ms": 14.498943090438843,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 5,
+            "1": 9,
+            "2": 36
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.76,
+          "latency_ms": 15.37006750702858,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 4,
+            "1": 4,
+            "2": 42
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.84,
+          "latency_ms": 16.0213440656662,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 4,
+            "2": 46
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 0.94,
+          "latency_ms": 9.331864044070244,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 27,
+            "1": 2,
+            "2": 20,
+            "5": 1
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.82,
+          "latency_ms": 15.769851431250572,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 3,
+            "1": 3,
+            "2": 44
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.84,
+          "latency_ms": 15.828119069337845,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 7,
+            "2": 41,
+            "5": 2
+          }
+        }
+      ],
+      "seed_start": 100000,
+      "seed_end": 100049
+    },
+    {
+      "success": 1.0,
+      "mean_reward": 1.0,
+      "avg_nfe": 1.6003999999999998,
+      "latency_ms": 14.248830944299698,
+      "total_calls": 2500,
+      "k_counts": {
+        "0": 400,
+        "1": 397,
+        "2": 1637,
+        "5": 66
+      },
+      "episodes": [
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.86,
+          "latency_ms": 15.921733379364014,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 3,
+            "1": 1,
+            "2": 46
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.38,
+          "latency_ms": 12.704809978604317,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 10,
+            "1": 11,
+            "2": 29
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.72,
+          "latency_ms": 15.253025367856026,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 6,
+            "1": 2,
+            "2": 42
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.6,
+          "latency_ms": 14.215981140732765,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 3,
+            "1": 17,
+            "2": 29,
+            "5": 1
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 2.12,
+          "latency_ms": 17.424255833029747,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 2,
+            "1": 2,
+            "2": 42,
+            "5": 4
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.78,
+          "latency_ms": 15.190951600670815,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 7,
+            "2": 42,
+            "5": 1
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.36,
+          "latency_ms": 12.274292334914207,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 16,
+            "2": 34
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.48,
+          "latency_ms": 13.425330072641373,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 5,
+            "1": 16,
+            "2": 29
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.68,
+          "latency_ms": 14.774178266525269,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 8,
+            "1": 3,
+            "2": 38,
+            "5": 1
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.8,
+          "latency_ms": 15.39369486272335,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 4,
+            "1": 2,
+            "2": 44
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.18,
+          "latency_ms": 11.324541419744492,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 10,
+            "1": 21,
+            "2": 19
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.72,
+          "latency_ms": 15.332696586847305,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 5,
+            "1": 4,
+            "2": 41
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.92,
+          "latency_ms": 16.701558232307434,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 1,
+            "1": 2,
+            "2": 47
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.2,
+          "latency_ms": 11.247394233942032,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 18,
+            "1": 22,
+            "2": 4,
+            "5": 6
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.72,
+          "latency_ms": 14.915441051125526,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 13,
+            "2": 33,
+            "5": 4
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.1,
+          "latency_ms": 10.696888342499733,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 17,
+            "1": 17,
+            "2": 14,
+            "5": 2
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.68,
+          "latency_ms": 14.731200262904167,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 7,
+            "1": 26,
+            "2": 9,
+            "5": 8
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.74,
+          "latency_ms": 15.34298226237297,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 13,
+            "1": 5,
+            "2": 26,
+            "5": 6
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.46,
+          "latency_ms": 13.303913623094559,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 11,
+            "1": 5,
+            "2": 34
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.84,
+          "latency_ms": 15.7668636739254,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 3,
+            "1": 2,
+            "2": 45
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.08,
+          "latency_ms": 10.197349861264229,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 33,
+            "1": 1,
+            "2": 9,
+            "5": 7
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.84,
+          "latency_ms": 16.08300693333149,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 3,
+            "1": 2,
+            "2": 45
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.86,
+          "latency_ms": 16.081112027168274,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 3,
+            "1": 1,
+            "2": 46
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.88,
+          "latency_ms": 16.099816635251045,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 3,
+            "2": 47
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 0.7,
+          "latency_ms": 8.086457327008247,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 16,
+            "1": 33,
+            "2": 1
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.86,
+          "latency_ms": 16.027139499783516,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 3,
+            "1": 1,
+            "2": 46
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.3,
+          "latency_ms": 12.534989416599274,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 7,
+            "1": 21,
+            "2": 22
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.88,
+          "latency_ms": 16.183033883571625,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 4,
+            "1": 16,
+            "2": 24,
+            "5": 6
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.88,
+          "latency_ms": 16.17305651307106,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 3,
+            "2": 47
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.8,
+          "latency_ms": 15.671235397458076,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 3,
+            "1": 4,
+            "2": 43
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.84,
+          "latency_ms": 15.787880048155785,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 4,
+            "2": 46
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.22,
+          "latency_ms": 11.672863587737083,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 8,
+            "1": 23,
+            "2": 19
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.14,
+          "latency_ms": 11.301092058420181,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 14,
+            "1": 15,
+            "2": 21
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 2.54,
+          "latency_ms": 20.703323781490326,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 5,
+            "1": 17,
+            "2": 10,
+            "5": 18
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.62,
+          "latency_ms": 15.164018347859383,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 9,
+            "1": 1,
+            "2": 40
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.82,
+          "latency_ms": 15.984582155942917,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 4,
+            "1": 1,
+            "2": 45
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.08,
+          "latency_ms": 11.053188368678093,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 12,
+            "1": 22,
+            "2": 16
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.92,
+          "latency_ms": 16.557771265506744,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 2,
+            "2": 48
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.3,
+          "latency_ms": 12.333733662962914,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 7,
+            "1": 24,
+            "2": 18,
+            "5": 1
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.84,
+          "latency_ms": 15.855768918991089,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 3,
+            "1": 2,
+            "2": 45
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.74,
+          "latency_ms": 15.30755490064621,
+          "n_calls": 50,
+          "k_counts": {
+            "1": 16,
+            "2": 33,
+            "5": 1
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.72,
+          "latency_ms": 14.959609135985374,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 7,
+            "2": 43
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.84,
+          "latency_ms": 15.964205116033554,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 3,
+            "1": 2,
+            "2": 45
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.9,
+          "latency_ms": 16.346729025244713,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 2,
+            "1": 1,
+            "2": 47
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 0.36,
+          "latency_ms": 5.18432579934597,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 40,
+            "1": 2,
+            "2": 8
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 0.76,
+          "latency_ms": 8.347503691911697,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 19,
+            "1": 24,
+            "2": 7
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.78,
+          "latency_ms": 15.738888010382652,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 2,
+            "1": 7,
+            "2": 41
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.48,
+          "latency_ms": 13.269943967461586,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 13,
+            "2": 37
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.76,
+          "latency_ms": 15.252053588628769,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 5,
+            "1": 2,
+            "2": 43
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.94,
+          "latency_ms": 16.577581763267517,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 1,
+            "1": 1,
+            "2": 48
+          }
+        }
+      ],
+      "seed_start": 100050,
+      "seed_end": 100099
+    },
+    {
+      "success": 1.0,
+      "mean_reward": 1.0,
+      "avg_nfe": 1.6064,
+      "latency_ms": 14.222000429034233,
+      "total_calls": 2500,
+      "k_counts": {
+        "0": 442,
+        "1": 295,
+        "2": 1698,
+        "5": 65
+      },
+      "episodes": [
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.02,
+          "latency_ms": 10.03507412970066,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 23,
+            "1": 3,
+            "2": 24
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.7,
+          "latency_ms": 14.984269067645073,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 6,
+            "1": 3,
+            "2": 41
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.14,
+          "latency_ms": 11.06536865234375,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 22,
+            "1": 2,
+            "2": 25,
+            "5": 1
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 0.6,
+          "latency_ms": 7.068099305033684,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 33,
+            "1": 4,
+            "2": 13
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.82,
+          "latency_ms": 15.626687183976173,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 6,
+            "2": 43,
+            "5": 1
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 2.16,
+          "latency_ms": 18.13585363328457,
+          "n_calls": 50,
+          "k_counts": {
+            "1": 1,
+            "2": 46,
+            "5": 3
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 2.06,
+          "latency_ms": 17.298057302832603,
+          "n_calls": 50,
+          "k_counts": {
+            "2": 49,
+            "5": 1
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.2,
+          "latency_ms": 11.62514790892601,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 6,
+            "1": 31,
+            "2": 12,
+            "5": 1
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.68,
+          "latency_ms": 14.747308939695358,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 8,
+            "2": 42
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.8,
+          "latency_ms": 15.321915596723557,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 8,
+            "2": 40,
+            "5": 2
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.82,
+          "latency_ms": 15.661132112145424,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 3,
+            "1": 3,
+            "2": 44
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.02,
+          "latency_ms": 10.200137794017792,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 19,
+            "1": 11,
+            "2": 20
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.22,
+          "latency_ms": 11.203727349638939,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 21,
+            "2": 28,
+            "5": 1
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.74,
+          "latency_ms": 15.10601706802845,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 4,
+            "1": 8,
+            "2": 37,
+            "5": 1
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.92,
+          "latency_ms": 16.645690575242043,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 2,
+            "2": 48
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.6,
+          "latency_ms": 14.128586426377296,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 10,
+            "1": 3,
+            "2": 36,
+            "5": 1
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.88,
+          "latency_ms": 16.19492046535015,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 3,
+            "2": 47
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.66,
+          "latency_ms": 14.613643661141396,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 11,
+            "1": 4,
+            "2": 32,
+            "5": 3
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.76,
+          "latency_ms": 15.120686292648315,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 6,
+            "2": 44
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 2.38,
+          "latency_ms": 19.302595928311348,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 2,
+            "1": 13,
+            "2": 23,
+            "5": 12
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.92,
+          "latency_ms": 16.463058218359947,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 2,
+            "2": 48
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 0.98,
+          "latency_ms": 10.049939677119255,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 7,
+            "1": 37,
+            "2": 6
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.04,
+          "latency_ms": 10.212731510400772,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 28,
+            "1": 1,
+            "2": 18,
+            "5": 3
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.88,
+          "latency_ms": 16.246317625045776,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 3,
+            "2": 47
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 2.5,
+          "latency_ms": 20.21319456398487,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 8,
+            "1": 13,
+            "2": 11,
+            "5": 18
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.66,
+          "latency_ms": 14.511730149388313,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 8,
+            "1": 1,
+            "2": 41
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.8,
+          "latency_ms": 15.547290295362473,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 6,
+            "1": 4,
+            "2": 38,
+            "5": 2
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.0,
+          "latency_ms": 10.29692031443119,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 11,
+            "1": 28,
+            "2": 11
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.06,
+          "latency_ms": 10.40682204067707,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 17,
+            "1": 25,
+            "2": 4,
+            "5": 4
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.02,
+          "latency_ms": 10.358343347907066,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 9,
+            "1": 31,
+            "2": 10
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.74,
+          "latency_ms": 15.207562893629074,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 6,
+            "1": 1,
+            "2": 43
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.56,
+          "latency_ms": 14.050094857811928,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 14,
+            "1": 6,
+            "2": 26,
+            "5": 4
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.28,
+          "latency_ms": 11.789794191718102,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 14,
+            "1": 8,
+            "2": 28
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.86,
+          "latency_ms": 15.992327407002449,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 3,
+            "1": 1,
+            "2": 46
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.84,
+          "latency_ms": 15.758058279752731,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 3,
+            "1": 2,
+            "2": 45
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.9,
+          "latency_ms": 16.400349512696266,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 2,
+            "1": 1,
+            "2": 47
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.64,
+          "latency_ms": 14.32099238038063,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 10,
+            "1": 1,
+            "2": 38,
+            "5": 1
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.88,
+          "latency_ms": 16.107319965958595,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 3,
+            "2": 47
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.66,
+          "latency_ms": 14.48739379644394,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 15,
+            "1": 2,
+            "2": 28,
+            "5": 5
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.88,
+          "latency_ms": 16.115399450063705,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 3,
+            "2": 47
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.96,
+          "latency_ms": 16.626442596316338,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 1,
+            "2": 49
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 0.6,
+          "latency_ms": 7.213197275996208,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 35,
+            "2": 15
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.92,
+          "latency_ms": 16.59528113901615,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 1,
+            "1": 2,
+            "2": 47
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.78,
+          "latency_ms": 15.263614058494568,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 5,
+            "1": 1,
+            "2": 44
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.98,
+          "latency_ms": 16.771907582879066,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 2,
+            "2": 47,
+            "5": 1
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.4,
+          "latency_ms": 12.88981705904007,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 7,
+            "1": 16,
+            "2": 27
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.42,
+          "latency_ms": 13.216047286987305,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 3,
+            "1": 23,
+            "2": 24
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.4,
+          "latency_ms": 12.661758065223694,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 13,
+            "1": 4,
+            "2": 33
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.72,
+          "latency_ms": 15.141796171665192,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 7,
+            "2": 43
+          }
+        },
+        {
+          "success": 1.0,
+          "reward": 1.0,
+          "avg_k": 1.86,
+          "latency_ms": 16.099600344896317,
+          "n_calls": 50,
+          "k_counts": {
+            "0": 3,
+            "1": 1,
+            "2": 46
+          }
+        }
+      ],
+      "seed_start": 100100,
+      "seed_end": 100149
+    }
+  ]
+}

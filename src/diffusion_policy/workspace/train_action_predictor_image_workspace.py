@@ -92,7 +92,10 @@ class TrainActionPredictorImageWorkspace(BaseWorkspace):
             config=OmegaConf.to_container(cfg, resolve=True),
             **cfg.logging
         )
-        wandb.config.update({"output_dir": self.output_dir})
+        try:
+            wandb.config.update({"output_dir": self.output_dir}, allow_val_change=True)
+        except Exception:
+            pass  # wandb 可能不允许更新 output_dir
 
         topk_manager = TopKCheckpointManager(
             save_dir=os.path.join(self.output_dir, 'checkpoints'),
@@ -174,8 +177,8 @@ class TrainActionPredictorImageWorkspace(BaseWorkspace):
                 wandb.log(epoch_log, step=self.global_step)
                 json_logger.log(epoch_log)
 
-                # checkpoint
-                ckpt_path = self.save_checkpoint()
+                # checkpoint (use_thread=False: 必须同步写完再 copy，否则 TopK 文件为空)
+                ckpt_path = self.save_checkpoint(use_thread=False)
                 metric_dict = {
                     'val_loss': val_loss,
                     'epoch': self.epoch

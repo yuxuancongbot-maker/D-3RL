@@ -218,17 +218,36 @@ def create_image_env(task: str, shape_meta: dict, dataset_path: str = None):
     import robomimic.utils.obs_utils as ObsUtils
     from diffusion_policy.env.robomimic.robomimic_image_wrapper import RobomimicImageWrapper
     from diffusion_policy.gym_util.multistep_wrapper import MultiStepWrapper
+    from diffusion_policy.model.common.rotation_transformer import RotationTransformer
     modality_mapping = {}
     for key, attr in shape_meta['obs'].items():
         modality_mapping.setdefault(attr.get('type', 'low_dim'), []).append(key)
     ObsUtils.initialize_obs_modality_mapping_from_dict(modality_mapping)
     env_meta = FileUtils.get_env_metadata_from_dataset(os.path.expanduser(dataset_path))
+    # Detect abs_action / rotation_6d from shape_meta (action dim 20 → rotation_6d)
+    action_dim = shape_meta['action']['shape'][0]
+    rotation_transformer = None
+    is_abs_action = False
+    if action_dim == 20:  # dual-arm rotation_6d (abs)
+        env_meta['env_kwargs']['controller_configs']['control_delta'] = False
+        rotation_transformer = RotationTransformer('axis_angle', 'rotation_6d')
+        is_abs_action = True
+    elif action_dim == 10:  # single-arm rotation_6d (abs)
+        env_meta['env_kwargs']['controller_configs']['control_delta'] = False
+        rotation_transformer = RotationTransformer('axis_angle', 'rotation_6d')
+        is_abs_action = True
     robomimic_env = EnvUtils.create_env_from_metadata(
         env_meta=env_meta, render=False, render_offscreen=False, use_image_obs=True)
+    # Find first rgb key as render_obs_key (avoid hardcoding 'agentview_image')
+    rgb_keys = [k for k, v in shape_meta['obs'].items() if v.get('type') == 'rgb']
+    render_obs_key = rgb_keys[0] if rgb_keys else 'agentview_image'
     env = MultiStepWrapper(
-        RobomimicImageWrapper(robomimic_env, shape_meta=shape_meta),
+        RobomimicImageWrapper(robomimic_env, shape_meta=shape_meta, render_obs_key=render_obs_key),
         n_obs_steps=2, n_action_steps=8,
         max_episode_steps=700 if base_task in {"transport", "tool_hang"} else 400)
+    # Attach rotation transformer for run_episode action conversion (20d→14d)
+    env._rotation_transformer = rotation_transformer
+    env._abs_action = is_abs_action
     return env, {"n_obs_steps": 2, "n_action_steps": 8,
                  "max_steps": 700 if base_task in {"transport", "tool_hang"} else 400}
 
@@ -299,16 +318,22 @@ def run_episode(policy, env, tcfg: dict, device: str = "cuda:0", obs_mode: str =
             all_rewards.append(np.max(reward) if np.ndim(reward) > 0 else reward)
 
     final_reward = float(np.max(all_rewards)) if all_rewards else 0.0
-    avg_ms = np.mean(timings) if timings else 0.0
+    avg_ms_all = np.mean(timings) if timings else 0.0
+    timing_samples = timings[1:] if len(timings) > 1 else timings
+    avg_ms = np.mean(timing_samples) if timing_samples else 0.0
+    first_ms = timings[0] if timings else 0.0
 
     return {
         "final_reward": final_reward,
         "success": float(final_reward > 0.5),
         "avg_inference_ms": avg_ms,
+        "avg_inference_ms_all": avg_ms_all,
+        "first_inference_ms": first_ms,
         "hz": 1000 / avg_ms if avg_ms > 0 else 0,
         "k_distribution": dict(Counter(k_history)),
         "avg_refinement_steps": np.mean(k_history) if k_history else 0,
         "n_steps": len(timings),
+        "n_timing_samples": len(timing_samples),
     }
 
 
@@ -345,8 +370,16 @@ def main():
     parser.add_argument("--image-dataset", default=None,
                         help="Robomimic image dataset path override for *_image tasks")
     parser.add_argument("--n-episodes", type=int, default=5)
+    parser.add_argument("--seed-start", type=int, default=42,
+                        help="First environment seed for evaluation episodes")
     parser.add_argument("--refinement-steps", type=int, default=None,
                         help="固定 DDIM 步数 (0=只用 VAE，跳过 scheduler)")
+    parser.add_argument("--random-routing-steps", nargs="+", type=int, default=None,
+                        help="State-independent random routing step choices, e.g. 0 5")
+    parser.add_argument("--random-routing-probs", nargs="+", type=float, default=None,
+                        help="Probabilities for --random-routing-steps, e.g. 0.625 0.375")
+    parser.add_argument("--random-routing-seed", type=int, default=0,
+                        help="Seed for state-independent random routing")
     args = parser.parse_args()
 
     device = args.device
@@ -366,26 +399,67 @@ def main():
     refine_policy, ref_cfg = load_policy(args.refiner, device)
 
     # 2. Scheduler
-    if args.scheduler:
+    if args.random_routing_steps is not None:
+        if args.scheduler is not None or args.refinement_steps is not None:
+            raise ValueError("--random-routing-steps is mutually exclusive with --scheduler/--refinement-steps")
+        if args.random_routing_probs is None:
+            probs = np.ones(len(args.random_routing_steps), dtype=np.float64) / len(args.random_routing_steps)
+        else:
+            probs = np.asarray(args.random_routing_probs, dtype=np.float64)
+            if len(probs) != len(args.random_routing_steps):
+                raise ValueError("--random-routing-probs must have the same length as --random-routing-steps")
+            probs = probs / probs.sum()
+        rsteps = [0, 1, 2, 5]
+
+        class RandomRoutingScheduler(torch.nn.Module):
+            def __init__(self, step_choices, step_probs, all_steps, seed):
+                super().__init__()
+                self.step_choices = [int(x) for x in step_choices]
+                self.step_probs = torch.tensor(step_probs, dtype=torch.float32)
+                self.all_steps = [int(x) for x in all_steps]
+                self.choice_to_idx = {step: self.all_steps.index(step) for step in self.step_choices}
+                self.generator = torch.Generator(device="cpu")
+                self.generator.manual_seed(int(seed))
+                self.register_buffer("rs_t", torch.tensor(self.all_steps, dtype=torch.long))
+
+            def select_action(self, obs, init_action, deterministic=True):
+                B = obs.shape[0] if isinstance(obs, torch.Tensor) else obs[list(obs.keys())[0]].shape[0]
+                dev = obs[list(obs.keys())[0]].device if isinstance(obs, dict) else obs.device
+                choices = torch.multinomial(self.step_probs, B, replacement=True, generator=self.generator)
+                chosen_steps = [self.step_choices[int(i)] for i in choices.cpu().tolist()]
+                chosen_indices = [self.choice_to_idx[int(k)] for k in chosen_steps]
+                steps = torch.tensor(chosen_steps, dtype=torch.long, device=dev)
+                idx = torch.tensor(chosen_indices, dtype=torch.long, device=dev)
+                return steps, idx, torch.zeros(B, device=dev), torch.zeros(B, device=dev)
+
+        scheduler = RandomRoutingScheduler(args.random_routing_steps, probs, rsteps, args.random_routing_seed).to(device)
+        print(f"  Using random routing scheduler: steps={args.random_routing_steps}, probs={probs.tolist()}, seed={args.random_routing_seed}")
+    elif args.scheduler:
         if obs_mode == "image":
             data = torch.load(args.scheduler, map_location=device)
             scfg = data.get("config", {})
-            rsteps = scfg.get("refinement_steps") or scfg.get("step_options") or [0, 1, 2, 5]
-            obs_feature_dim = scfg.get("obs_dim", None) or scfg.get("obs_feature_dim", None)
-            if obs_feature_dim is None:
-                obs_feature_dim = refine_policy.obs_encoder.output_shape()[0]
-                print(f"  Inferred image scheduler obs_feature_dim={obs_feature_dim} from refiner encoder")
-            scheduler = AdaSchedulerForImages(
-                obs_encoder=copy.deepcopy(refine_policy.obs_encoder),
-                obs_feature_dim=obs_feature_dim,
-                action_dim=scfg.get("action_dim", ref_cfg.policy.action_dim),
-                action_horizon=scfg.get("horizon", ref_cfg.policy.horizon),
-                n_obs_steps=scfg.get("n_obs_steps", ref_cfg.policy.n_obs_steps),
-                refinement_steps=rsteps,
-                freeze_encoder=True,
-            ).to(device)
-            scheduler.load_state_dict(data["scheduler_state_dict"], strict=False)
-            scheduler.eval()
+            if scfg.get("obs_mode") == "image_feature":
+                # Feature-level image scheduler pretrained on source VAE obs_feat.
+                # AdaBridgerPolicy._get_scheduler_obs will feed source_result['obs_feat']
+                # when this obs_dim matches, so do not wrap a second image encoder here.
+                scheduler = load_scheduler(args.scheduler, device)
+            else:
+                rsteps = scfg.get("refinement_steps") or scfg.get("step_options") or [0, 1, 2, 5]
+                obs_feature_dim = scfg.get("obs_dim", None) or scfg.get("obs_feature_dim", None)
+                if obs_feature_dim is None:
+                    obs_feature_dim = refine_policy.obs_encoder.output_shape()[0]
+                    print(f"  Inferred image scheduler obs_feature_dim={obs_feature_dim} from refiner encoder")
+                scheduler = AdaSchedulerForImages(
+                    obs_encoder=copy.deepcopy(refine_policy.obs_encoder),
+                    obs_feature_dim=obs_feature_dim,
+                    action_dim=scfg.get("action_dim", ref_cfg.policy.action_dim),
+                    action_horizon=scfg.get("horizon", ref_cfg.policy.horizon),
+                    n_obs_steps=scfg.get("n_obs_steps", ref_cfg.policy.n_obs_steps),
+                    refinement_steps=rsteps,
+                    freeze_encoder=True,
+                ).to(device)
+                scheduler.load_state_dict(data["scheduler_state_dict"], strict=False)
+                scheduler.eval()
         else:
             scheduler = load_scheduler(args.scheduler, device)
     else:
@@ -463,13 +537,14 @@ def main():
         env, _ = create_env(base_task)
     all_results = []
     for ep in range(args.n_episodes):
-        env.seed(42 + ep)
+        env.seed(args.seed_start + ep)
         r = run_episode(d3rl_policy, env, tcfg_full, device, obs_mode=obs_mode)
         all_results.append(r)
         print(f"  Ep {ep+1}: reward={r['final_reward']:.2f}  "
               f"success={'✓' if r['success'] else '✗'}  "
               f"avg_k={r['avg_refinement_steps']:.1f}  "
               f"{r['avg_inference_ms']:.1f}ms (~{r['hz']:.0f}Hz)  "
+              f"first={r['first_inference_ms']:.1f}ms  "
               f"k_dist={r['k_distribution']}")
     env.close()
 
@@ -481,12 +556,17 @@ def main():
     successes = [r["success"] for r in all_results]
     ks = [r["avg_refinement_steps"] for r in all_results]
     ms_list = [r["avg_inference_ms"] for r in all_results]
+    ms_all_list = [r["avg_inference_ms_all"] for r in all_results]
+    first_ms_list = [r["first_inference_ms"] for r in all_results]
     print(f"  Episodes:          {len(all_results)}")
     print(f"  Success rate:      {np.mean(successes):.2%}")
     print(f"  Mean reward:       {np.mean(rewards):.3f}")
     print(f"  Avg k (refine):    {np.mean(ks):.2f}")
     if ms_list:
-        print(f"  Avg inference:     {np.mean(ms_list):.1f} ms  (~{1000/np.mean(ms_list):.0f} Hz)")
+        avg_ms = np.mean(ms_list)
+        print(f"  Avg inference:     {avg_ms:.1f} ms  (~{1000/avg_ms:.0f} Hz)")
+        print(f"  First inference:   {np.mean(first_ms_list):.1f} ms")
+        print(f"  Avg inference all: {np.mean(ms_all_list):.1f} ms")
 
     internal_stats = d3rl_policy.get_inference_stats()
     if internal_stats.get('total_calls', 0) > 0:

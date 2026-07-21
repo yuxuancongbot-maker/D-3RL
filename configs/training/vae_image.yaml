@@ -1,0 +1,18 @@
+# Training config for VAE image predictor
+device: "cuda:0"
+seed: 42
+debug: false
+resume: false
+lr_scheduler: cosine
+lr_warmup_steps: 500
+num_epochs: 2000
+gradient_accumulate_every: 1
+use_ema: false
+rollout_every: 50
+checkpoint_every: 100
+val_every: 50
+sample_every: 10
+freeze_encoder: false
+max_train_steps: null
+max_val_steps: null
+tqdm_interval_sec: 1.0

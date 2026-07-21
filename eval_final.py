@@ -7,8 +7,8 @@ from collections import defaultdict
 from omegaconf import OmegaConf; import hydra
 OmegaConf.register_new_resolver('eval', eval, replace=True)
 DEVICE = 'cuda:0'
-N_RUNS = 5
-N_EPS = 10  # 10 episodes per run
+N_RUNS = 3
+N_EPS = 50  # 50 episodes per run
 OUT_DIR = 'result/lowdim'
 
 os.makedirs(OUT_DIR, exist_ok=True)
